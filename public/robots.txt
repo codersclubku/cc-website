@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /admin
+Disallow: /admin/
+Disallow: /account
+Disallow: /account/
+Disallow: /api/
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Sitemap: https://codersclub.kishkindauniversity.edu.in/sitemap.xml

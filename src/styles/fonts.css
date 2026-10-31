@@ -1,0 +1,18 @@
+/* 
+  Coders Club Brand Pack: Typography
+  Source: brand-pack-web.md Section 4
+  Two typefaces with strict roles:
+  - Raleway for words (display, h1 to h4, body, captions, quotes)
+  - JetBrains Mono for facts and machine text (labels, buttons, badges, dates, times, prices, numbers, IDs, URLs, code)
+*/
+:root {
+  --font-sans: "Raleway", "Raleway Variable", Montserrat, "Nunito Sans", ui-sans-serif, system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrains Mono Variable", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+  
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
+
+  --font-script-kn: "Noto Sans Kannada", "Raleway", sans-serif;
+  --font-script-hi: "Noto Sans Devanagari", "Raleway", sans-serif;
+  --font-script-te: "Noto Sans Telugu", "Raleway", sans-serif;
+}

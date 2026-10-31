@@ -1,0 +1,290 @@
+:root {
+  --cc-cursor-color: #5A189A;
+  --cc-cursor-fill: rgba(90, 24, 154, 0.12);
+  --cc-cursor-text: #240046;
+}
+
+:root[data-theme="dark"] {
+  --cc-cursor-color: #C77DFF;
+  --cc-cursor-fill: rgba(199, 125, 255, 0.14);
+  --cc-cursor-text: #FFFFFF;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cc-cursor-color: #C77DFF;
+    --cc-cursor-fill: rgba(199, 125, 255, 0.14);
+    --cc-cursor-text: #FFFFFF;
+  }
+}
+
+.cc-cursor-follower {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 250;
+  will-change: transform, opacity;
+  transition: opacity 0.15s ease-out;
+  contain: layout style paint;
+}
+
+.cc-cursor-follower[data-hidden="true"] {
+  opacity: 0;
+}
+
+.cc-cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background-color: var(--cc-cursor-color);
+  pointer-events: none;
+  z-index: 252;
+  will-change: transform, opacity;
+  transition: opacity 0.12s ease-out;
+  contain: layout style paint;
+}
+
+.cc-cursor-dot[data-hidden="true"] {
+  opacity: 0;
+}
+
+.cc-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--cc-cursor-color);
+  border-radius: 2px;
+  background-color: transparent;
+  pointer-events: none;
+  z-index: 251;
+  box-sizing: border-box;
+  will-change: transform, width, height, border-radius, background-color;
+  transition: width 0.18s cubic-bezier(0.2, 0, 0, 1),
+              height 0.18s cubic-bezier(0.2, 0, 0, 1),
+              border-radius 0.18s cubic-bezier(0.2, 0, 0, 1),
+              border-width 0.15s ease-out,
+              background-color 0.18s ease-out,
+              border-color 0.18s ease-out,
+              opacity 0.15s ease-out;
+  contain: layout style paint;
+}
+
+.cc-cursor-ring[data-hidden="true"] {
+  opacity: 0;
+}
+
+.cc-cursor-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-cursor-text);
+  line-height: 1;
+  user-select: none;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+}
+
+.cc-cursor-ring[data-variant="link"] {
+  width: 40px;
+  height: 40px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 3px;
+}
+
+.cc-cursor-ring[data-variant="button"] {
+  width: 36px;
+  height: 36px;
+  border-width: 2px;
+  border-radius: 4px;
+  background-color: var(--cc-cursor-fill);
+}
+
+.cc-cursor-ring[data-variant="view"] {
+  width: 72px;
+  height: 72px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 4px;
+}
+.cc-cursor-ring[data-variant="view"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cc-cursor-ring[data-variant="team-card"] {
+  width: auto;
+  height: 22px;
+  padding: 2px 8px;
+  background-color: var(--cc-cursor-fill);
+  border: 1px solid var(--cc-cursor-color);
+  border-radius: 2px;
+  backdrop-filter: blur(4px);
+}
+.cc-cursor-ring[data-variant="team-card"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.cc-cursor-ring[data-variant="register"] {
+  width: 84px;
+  height: 84px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 4px;
+}
+.cc-cursor-ring[data-variant="register"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cc-cursor-ring[data-variant="expand"] {
+  width: 72px;
+  height: 72px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 4px;
+}
+.cc-cursor-ring[data-variant="expand"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cc-cursor-ring[data-variant="drag"] {
+  width: 64px;
+  height: 64px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 3px;
+}
+.cc-cursor-ring[data-variant="drag"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cc-cursor-ring[data-variant="external"] {
+  width: 38px;
+  height: 38px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 3px;
+}
+.cc-cursor-ring[data-variant="external"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cc-cursor-ring[data-variant="copy"] {
+  width: 68px;
+  height: 68px;
+  background-color: var(--cc-cursor-fill);
+  border-radius: 4px;
+}
+.cc-cursor-ring[data-variant="copy"] .cc-cursor-label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cc-cursor-ring[data-variant="text"] {
+  width: 2px;
+  height: 20px;
+  border-radius: 1px;
+  border-width: 1px;
+  background-color: var(--cc-cursor-color);
+}
+
+.cc-cursor-burst-particle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  background-color: var(--cc-cursor-color);
+  pointer-events: none;
+  z-index: 253;
+  border-radius: 0;
+  will-change: transform, opacity;
+  animation: cc-burst-fade 360ms cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes cc-burst-fade {
+  0% {
+    opacity: 1;
+    transform: translate3d(var(--px), var(--py), 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(var(--px) + var(--dx)), calc(var(--py) + var(--dy)), 0) scale(0.3);
+  }
+}
+
+html.cc-cursor-ready [data-cursor-hide-native] {
+  cursor: none !important;
+}
+
+html.cc-cursor-ready [data-cursor-hide-native] * {
+  cursor: none !important;
+}
+
+[data-cursor-native],
+[data-cursor-native] *,
+input,
+textarea,
+select {
+  cursor: auto !important;
+}
+
+button[disabled],
+.cc-btn[disabled],
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-cursor-ring,
+  .cc-cursor-dot,
+  .cc-cursor-label {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cc-cursor-burst-particle {
+    display: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .cc-cursor-follower,
+  .cc-cursor-dot,
+  .cc-cursor-ring,
+  .cc-cursor-burst-particle {
+    display: none !important;
+  }
+  html.cc-cursor-ready [data-cursor-hide-native],
+  html.cc-cursor-ready [data-cursor-hide-native] * {
+    cursor: auto !important;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cc-cursor-follower,
+  .cc-cursor-dot,
+  .cc-cursor-ring,
+  .cc-cursor-label,
+  .cc-cursor-burst-particle {
+    display: none !important;
+  }
+  html.cc-cursor-ready [data-cursor-hide-native],
+  html.cc-cursor-ready [data-cursor-hide-native] * {
+    cursor: auto !important;
+  }
+}
