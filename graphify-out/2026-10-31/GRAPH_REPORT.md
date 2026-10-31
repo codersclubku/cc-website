@@ -1,7 +1,7 @@
 # Graph Report - CC Website  (2026-10-31)
 
 ## Corpus Check
-- 170 files · ~656,379 words
+- 170 files · ~656,445 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: .css 3, .example 2, (none) 2)
 

@@ -1,5 +1,6 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { motion } from 'motion/react';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -110,6 +111,7 @@ export const App: React.FC = () => {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
+            <Analytics />
             <CursorProvider>
               <ScrollToTop />
               <Routes>
