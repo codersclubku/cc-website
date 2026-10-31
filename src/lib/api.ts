@@ -692,6 +692,20 @@ export async function checkConsentStatus(
       .maybeSingle();
 
     if (error) {
+      // Resilient fallback if table does not yet have superseded_at column (pre-migration state)
+      if (error.code === '42703' || error.message?.includes('superseded_at')) {
+        const fallback = await supabase
+          .from('consents')
+          .select('id')
+          .eq('student_id', studentId)
+          .eq('notice_version', version)
+          .is('withdrawn_at', null)
+          .maybeSingle();
+
+        if (!fallback.error) {
+          return fallback.data ? { status: 'ACTIVE' } : { status: 'MISSING' };
+        }
+      }
       return { status: 'ERROR', message: mapApiError(error) };
     }
 

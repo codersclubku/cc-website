@@ -55,7 +55,7 @@ export interface AuthContextType {
   }) => Promise<{ success: boolean; error?: string }>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (data: SignUpFormData) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean }>;
-  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: (returnPath?: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const mountedRef = useRef(true);
 
   // ---------------------------------------------------------------------------
-  // 1. Synchronous GoTrue Auth State Listener (Strictly synchronous callbacks)
+  // 1. Authoritative Auth State & Session Initialization
   // ---------------------------------------------------------------------------
   useEffect(() => {
     mountedRef.current = true;
@@ -108,10 +108,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
+    // Inspect URL for OAuth parameters or errors
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(
+      window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+    );
+    const oauthError =
+      searchParams.get('error_description') ||
+      hashParams.get('error_description') ||
+      searchParams.get('error') ||
+      hashParams.get('error');
+
+    if (oauthError) {
+      setProfileLoadError(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
+    }
+
+    const hasCallbackInUrl = Boolean(
+      searchParams.get('code') ||
+      hashParams.get('access_token')
+    );
+
+    // 1. Subscribe to subsequent auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mountedRef.current) return;
 
-      if (event === 'SIGNED_OUT' || !session?.user) {
+      if (event === 'SIGNED_OUT') {
         authOpRef.current++;
         activeUserIdRef.current = null;
         setUser(null);
@@ -120,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfileLoadError(null);
         setConsentState('MISSING');
         setLoading(false);
-      } else if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      } else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
         const authUser: AuthUser = {
           id: session.user.id,
           email: session.user.email,
@@ -129,20 +150,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         activeUserIdRef.current = authUser.id;
         setUser(authUser);
-      } else if (event === 'TOKEN_REFRESHED') {
-        // Silently update token credentials without resetting profile/loading state
-        if (session.user.id === activeUserIdRef.current) {
-          setUser((prev) =>
-            prev ? { ...prev, email_confirmed_at: session.user.email_confirmed_at, user_metadata: session.user.user_metadata } : null
-          );
-        }
-      } else if (event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
-        if (session.user.id === activeUserIdRef.current) {
+      } else if (event === 'INITIAL_SESSION' && !session?.user && !hasCallbackInUrl) {
+        // Only mark unauthenticated if there is no pending OAuth code in URL
+        authOpRef.current++;
+        activeUserIdRef.current = null;
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setProfileLoadError(null);
+        setConsentState('MISSING');
+        setLoading(false);
+      } else if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+        if (session?.user && session.user.id === activeUserIdRef.current) {
           setUser((prev) =>
             prev ? { ...prev, email_confirmed_at: session.user.email_confirmed_at, user_metadata: session.user.user_metadata } : null
           );
         }
       }
+    });
+
+    // 2. Authoritative getSession() to guarantee PKCE code exchange finishes before ending loading
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mountedRef.current) return;
+
+      if (error) {
+        setProfileLoadError(error.message);
+      }
+
+      if (session?.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email,
+          email_confirmed_at: session.user.email_confirmed_at,
+          user_metadata: session.user.user_metadata
+        };
+        activeUserIdRef.current = authUser.id;
+        setUser(authUser);
+      } else {
+        authOpRef.current++;
+        activeUserIdRef.current = null;
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setConsentState('MISSING');
+        setLoading(false);
+      }
+    }).catch((err) => {
+      if (!mountedRef.current) return;
+      setProfileLoadError(err?.message || 'Authentication initialization error');
+      setLoading(false);
     });
 
     return () => {
@@ -506,13 +562,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true, requiresVerification: false };
   };
 
-  const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+  const signInWithGoogle = async (returnPath?: string): Promise<{ success: boolean; error?: string }> => {
     if (isSupabaseConfigured && supabase) {
       const allowedDomain = import.meta.env.VITE_ALLOWED_EMAIL_DOMAIN;
+      const targetUrl = returnPath
+        ? `${window.location.origin}${returnPath.startsWith('/') ? returnPath : `/${returnPath}`}`
+        : `${window.location.origin}/account`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/account`,
+          redirectTo: targetUrl,
           queryParams: allowedDomain ? { hd: allowedDomain } : undefined
         }
       });

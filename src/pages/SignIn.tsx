@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isProfileComplete } from '../context/AuthContext';
 import { signInSchema } from '../lib/validation';
 import type { SignInFormData } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
 
 export const SignIn: React.FC = () => {
-  const { signIn, signInWithGoogle } = useAuth();
+  const { user, profile, isAdmin, consentState, loading, signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo') || '/events';
+  const rawReturnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo');
+  const returnUrl = (rawReturnUrl && rawReturnUrl !== '/signin' && rawReturnUrl !== '/signup') ? rawReturnUrl : '/account';
+
+  const hashError = typeof window !== 'undefined' && window.location.hash
+    ? new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash).get('error_description')
+    : null;
+  const urlOAuthError = searchParams.get('error_description') || searchParams.get('error') || hashError;
 
   const [formData, setFormData] = useState<SignInFormData>({
     email: '',
@@ -26,7 +32,32 @@ export const SignIn: React.FC = () => {
   const [failCount, setFailCount] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
-  React.useEffect(() => {
+  // If user is already authenticated or becomes authenticated via OAuth, redirect accordingly
+  useEffect(() => {
+    if (loading || !user) return;
+
+    if (isAdmin && !profile) {
+      navigate('/admin', { replace: true });
+    } else if (!isProfileComplete(profile) || consentState !== 'ACTIVE') {
+      navigate('/onboarding', { replace: true });
+    } else {
+      navigate(returnUrl, { replace: true });
+    }
+  }, [user, profile, isAdmin, consentState, loading, navigate, returnUrl]);
+
+  // Capture OAuth callback error descriptions if redirected back with errors
+  useEffect(() => {
+    if (urlOAuthError) {
+      const decoded = decodeURIComponent(urlOAuthError.replace(/\+/g, ' '));
+      if (decoded.includes('already exists') || decoded.includes('identity_already_exists')) {
+        setAuthError('An account with this email address already exists. Please sign in using your email and password.');
+      } else {
+        setAuthError(decoded);
+      }
+    }
+  }, [urlOAuthError]);
+
+  useEffect(() => {
     if (lockoutSeconds <= 0) return;
     const timer = setInterval(() => {
       setLockoutSeconds((prev) => prev - 1);
@@ -108,12 +139,10 @@ export const SignIn: React.FC = () => {
   const handleGoogleAuth = async () => {
     setAuthError(null);
     setIsSubmitting(true);
-    const result = await signInWithGoogle();
+    const result = await signInWithGoogle(returnUrl);
     setIsSubmitting(false);
     if (!result.success) {
       setAuthError(result.error || 'Google authentication failed.');
-    } else {
-      navigate(returnUrl, { replace: true });
     }
   };
 

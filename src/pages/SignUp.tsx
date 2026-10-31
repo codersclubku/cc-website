@@ -1,17 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isProfileComplete } from '../context/AuthContext';
 import { signUpSchema, DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS } from '../lib/validation';
 import type { SignUpFormData } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
 
 export const SignUp: React.FC = () => {
-  const { signUp, signInWithGoogle } = useAuth();
+  const { user, profile, isAdmin, consentState, loading, signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo') || '/events';
+  const rawReturnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo');
+  const returnUrl = (rawReturnUrl && rawReturnUrl !== '/signin' && rawReturnUrl !== '/signup') ? rawReturnUrl : '/account';
+
+  // If user is already authenticated or becomes authenticated via OAuth, redirect accordingly
+  useEffect(() => {
+    if (loading || !user) return;
+
+    if (isAdmin && !profile) {
+      navigate('/admin', { replace: true });
+    } else if (!isProfileComplete(profile) || consentState !== 'ACTIVE') {
+      navigate('/onboarding', { replace: true });
+    } else {
+      navigate(returnUrl, { replace: true });
+    }
+  }, [user, profile, isAdmin, consentState, loading, navigate, returnUrl]);
 
   const [formData, setFormData] = useState<SignUpFormData>({
     fullName: '',
@@ -106,12 +120,10 @@ export const SignUp: React.FC = () => {
   const handleGoogleAuth = async () => {
     setServerError(null);
     setIsSubmitting(true);
-    const result = await signInWithGoogle();
+    const result = await signInWithGoogle(returnUrl);
     setIsSubmitting(false);
     if (!result.success) {
       setServerError(result.error || 'Google authentication failed.');
-    } else {
-      navigate(returnUrl, { replace: true });
     }
   };
 

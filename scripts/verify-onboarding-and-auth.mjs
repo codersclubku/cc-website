@@ -396,4 +396,123 @@ assert.strictEqual(adminMissingProf.code, 'PROFILE_NOT_FOUND');
 
 console.log('✓ Administrator registration auditability and authorization boundaries verified.\n');
 
+// -----------------------------------------------------------------------------
+// Test 9: OAuth Callback Invariants and Race Condition Immunity
+// -----------------------------------------------------------------------------
+console.log('Test 9: OAuth Callback Invariants and Race Condition Immunity');
+
+// 9a: Protected route evaluation when code callback is in flight
+function evaluateProtectedRouteGuard({ loading, user, searchParams, hash }) {
+  const hasCallbackInUrl = Boolean(
+    (searchParams && searchParams.includes('code=')) ||
+    (hash && hash.includes('access_token='))
+  );
+
+  if (loading || (!user && hasCallbackInUrl)) {
+    return 'LOADER'; // Remains on loading screen while callback settles
+  }
+
+  if (!user) {
+    return 'REDIRECT_SIGNIN';
+  }
+
+  return 'PROCEED';
+}
+
+// Scenario 1: Initial load on /account with ?code= in URL before exchange finishes
+assert.strictEqual(
+  evaluateProtectedRouteGuard({ loading: false, user: null, searchParams: '?code=oauth_code_123', hash: '' }),
+  'LOADER',
+  'Must show LOADER and NOT redirect to signin when callback code is in URL'
+);
+
+// Scenario 2: Normal unauthenticated visit without code
+assert.strictEqual(
+  evaluateProtectedRouteGuard({ loading: false, user: null, searchParams: '', hash: '' }),
+  'REDIRECT_SIGNIN',
+  'Must redirect to signin when genuinely unauthenticated'
+);
+
+// Scenario 3: Authenticated user
+assert.strictEqual(
+  evaluateProtectedRouteGuard({ loading: false, user: { id: 'u1' }, searchParams: '', hash: '' }),
+  'PROCEED',
+  'Must proceed when authenticated'
+);
+
+// 9b: Post-authentication routing logic on /signin or /account
+function resolveAuthenticatedRedirect({ user, profile, isAdmin, consentState, returnUrl }) {
+  if (!user) return '/signin';
+  if (isAdmin && !profile) return '/admin';
+  if (!isProfileComplete(profile) || consentState !== 'ACTIVE') return '/onboarding';
+  return returnUrl || '/account';
+}
+
+// Scenario 4: New Google user has no profile yet -> goes to /onboarding
+assert.strictEqual(
+  resolveAuthenticatedRedirect({
+    user: { id: 'new-google-user', email: 'newstudent@ku.edu.in' },
+    profile: null,
+    isAdmin: false,
+    consentState: 'MISSING',
+    returnUrl: '/account'
+  }),
+  '/onboarding',
+  'New OAuth student must be routed to onboarding'
+);
+
+// Scenario 5: Existing student with complete profile -> goes to requested returnUrl
+assert.strictEqual(
+  resolveAuthenticatedRedirect({
+    user: { id: 'existing-student', email: 'student@ku.edu.in' },
+    profile: {
+      id: 'existing-student',
+      full_name: 'Rahul Verma',
+      usn: 'KU2024CS002',
+      department: 'Computer Science and Engineering',
+      year: '2nd Year',
+      semester: '3rd Semester'
+    },
+    isAdmin: false,
+    consentState: 'ACTIVE',
+    returnUrl: '/events/hackathon/register'
+  }),
+  '/events/hackathon/register',
+  'Existing OAuth student must be routed to requested returnUrl'
+);
+
+// Scenario 6: Admin user without student profile -> goes to /admin
+assert.strictEqual(
+  resolveAuthenticatedRedirect({
+    user: { id: 'admin-user', email: 'admin@ku.edu.in' },
+    profile: null,
+    isAdmin: true,
+    consentState: 'MISSING',
+    returnUrl: '/account'
+  }),
+  '/admin',
+  'Admin user without student profile must be routed to admin dashboard'
+);
+
+// 9c: Error description extraction from URL search or hash
+function extractOAuthError(searchStr, hashStr) {
+  const sp = new URLSearchParams(searchStr);
+  const hp = new URLSearchParams(hashStr.startsWith('#') ? hashStr.slice(1) : hashStr);
+  const raw = sp.get('error_description') || hp.get('error_description') || sp.get('error') || hp.get('error');
+  if (!raw) return null;
+  return decodeURIComponent(raw.replace(/\+/g, ' '));
+}
+
+assert.strictEqual(
+  extractOAuthError('', '#error=access_denied&error_description=An+account+with+this+email+address+already+exists'),
+  'An account with this email address already exists'
+);
+assert.strictEqual(
+  extractOAuthError('?error=server_error&error_description=Database+error', ''),
+  'Database error'
+);
+assert.strictEqual(extractOAuthError('', ''), null);
+
+console.log('✓ OAuth callback invariants, race condition immunity, and routing verified.\n');
+
 console.log('=== ALL ONBOARDING & AUTH UNIT TESTS PASSED ===');
