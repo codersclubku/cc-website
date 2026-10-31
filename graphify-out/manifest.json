@@ -354,9 +354,9 @@
     "semantic_hash": "64eff31fc3a104faa969a48011a4d6f6"
   },
   "src/content/people.ts": {
-    "mtime": 1793464049.801366,
-    "seen": 1793464078.8440585,
-    "ast_hash": "35f88d4a840059d72bd9733f08686d22",
+    "mtime": 1793464468.1862562,
+    "seen": 1793464506.9023466,
+    "ast_hash": "e1dfc3808cc1abdd25547c4a1f29eccf",
     "semantic_hash": ""
   },
   "src/content/site.ts": {
@@ -426,9 +426,9 @@
     "semantic_hash": "0f893360badd875ed29143c1943418ec"
   },
   "src/pages/About.tsx": {
-    "mtime": 1793463969.8666704,
-    "seen": 1793464078.8458388,
-    "ast_hash": "24317c64820b7359df1e3bb8822956e0",
+    "mtime": 1793464478.4480028,
+    "seen": 1793464506.9046094,
+    "ast_hash": "e44a4acd060f23f5cc43fccfec40a6d6",
     "semantic_hash": ""
   },
   "src/pages/Account.tsx": {

@@ -214,8 +214,13 @@ export const About: React.FC = () => {
                     <div className="font-mono text-xs uppercase tracking-wider text-[var(--text-strong)] dark:text-[var(--accent-on-dark)] mt-1 font-semibold">
                       {member.role}
                     </div>
+                    {member.designation && member.designation !== member.role && (
+                      <div className="text-xs text-[var(--accent)] font-medium mt-0.5">
+                        {member.designation}
+                      </div>
+                    )}
                     {member.department && (
-                      <div className="text-xs text-[var(--text-muted)] font-sans mt-1">
+                      <div className="text-xs text-[var(--text-muted)] font-sans mt-0.5">
                         {member.department}
                       </div>
                     )}
