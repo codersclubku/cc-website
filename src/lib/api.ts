@@ -337,7 +337,7 @@ function getInitialMockTeamMembers(): DbTeamMember[] {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((m: DbTeamMember) => {
+          const mapped = parsed.map((m: DbTeamMember) => {
             const matched = origList.find((orig) => orig.id === m.id || orig.name.trim().toLowerCase() === m.name.trim().toLowerCase());
             return {
               ...m,
@@ -350,6 +350,10 @@ function getInitialMockTeamMembers(): DbTeamMember[] {
               designation: m.designation || matched?.designation || null,
             };
           });
+          const parsedIds = new Set(parsed.map((p: DbTeamMember) => p.id));
+          const parsedNames = new Set(parsed.map((p: DbTeamMember) => p.name?.trim().toLowerCase()));
+          const missingOrig = origList.filter((orig) => !parsedIds.has(orig.id) && !parsedNames.has(orig.name?.trim().toLowerCase()));
+          return [...mapped, ...missingOrig];
         }
       }
     } catch {}

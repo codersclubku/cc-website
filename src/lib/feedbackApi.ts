@@ -12,6 +12,7 @@ export const AUTHORIZED_FEEDBACK_ADMIN_EMAILS = [
   'dvnsabhiram071@gmail.com',
   'vannurswamy@kishkindauniversity.edu.in',
   'anusha@kishkindauniversity.edu.in',
+  'venkateshpolepalli@kishkindauniversity.edu.in',
 ];
 
 export function isAuthorizedFeedbackAdmin(userEmail?: string | null): boolean {

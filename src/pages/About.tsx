@@ -204,7 +204,7 @@ export const About: React.FC = () => {
             <h3 className="text-lg font-bold text-[var(--text)] m-0">
               Faculty Coordinators
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl">
               {facultyGroup?.members.map((member) => (
                 <div key={member.id} className="p-4 bg-[var(--surface-2)] border border-[var(--border)] rounded-md flex flex-col justify-between gap-3">
                   <div>
