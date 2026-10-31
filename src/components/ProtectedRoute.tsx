@@ -17,12 +17,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, profile, isAdmin, consentState, profileLoadError, loading } = useAuth();
   const location = useLocation();
 
-  const hasCallbackInUrl = typeof window !== 'undefined' && (
-    window.location.search.includes('code=') ||
-    window.location.hash.includes('access_token=')
-  );
-
-  if (loading || (!user && hasCallbackInUrl)) {
+  if (loading) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 p-8">
         <Loader variant="snake" delayMs={100} />

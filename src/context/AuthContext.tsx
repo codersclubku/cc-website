@@ -195,10 +195,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setConsentState('MISSING');
         setLoading(false);
       }
+
+      // Clean up OAuth query parameters and hash from the URL once PKCE resolution settles
+      if (typeof window !== 'undefined' && hasCallbackInUrl) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
     }).catch((err) => {
       if (!mountedRef.current) return;
       setProfileLoadError(err?.message || 'Authentication initialization error');
       setLoading(false);
+
+      if (typeof window !== 'undefined' && hasCallbackInUrl) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
     });
 
     return () => {

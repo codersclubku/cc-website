@@ -99,31 +99,78 @@ The following targeted, non-breaking modifications were implemented across 5 fil
 
 ---
 
-## 5. Verification & Test Suite Results
+## 5. Follow-Up Diagnostic: "Verifying Security Credentials..." Loader Freeze
 
-| Test Suite / Tool | Command | Result | Details |
-| :--- | :--- | :---: | :--- |
-| **Onboarding & Auth Tests** | `node scripts/verify-onboarding-and-auth.mjs` | **PASS** | Added Test 9 verifying OAuth callback invariants, race condition immunity, and post-auth routing logic. |
-| **All Test Suites** | `npm run test:all` | **PASS** | 5 verification suites passed: RPC consistency (12/12), Excel export sanitization, Auth export, Backend hardening. |
-| **Linter** | `npm run lint` | **PASS** | 119 files scanned. **0 errors**. |
-| **Production Build** | `npm run build` | **PASS** | Clean build (`tsc -b && vite build`) generated in 2.70s. |
+### 5.1 Observed Behavior
+Following deployment of commit `4669c1e`, testing the OAuth callback flow produced a persistent loading screen:
+`"VERIFYING SECURITY CREDENTIALS..."` on the route `/account`, with the navbar showing `"SIGN IN"`. The browser was trapped indefinitely.
+
+### 5.2 Root Cause Analysis & Identity Investigation
+1. **Investigation of Candidate Identities (`codersclub.ku@gmail.com`, `vittuvlogs25@gmail.com`, `vittala.t1@gmail.com`)**:
+   - Direct database inspection of `auth.flow_state`, `auth.users`, `auth.identities`, and `auth.sessions` was performed on production project `lqlokvzvfccrarjmdvcv`.
+   - `auth.users` contains **only one** record: `vittala.t1@gmail.com` (created at `05:03:06 UTC` via password signup).
+   - In `auth.flow_state`, 7 Google OAuth attempts were logged between `10:52 UTC` and `11:23 UTC`. In all 7 entries, `user_id` and `auth_code_issued_at` are `NULL`.
+   - Neither `codersclub.ku@gmail.com` nor `vittuvlogs25@gmail.com` was ever created in `auth.users`.
+   - **Conclusion**: Because neither `codersclub.ku@gmail.com` nor `vittuvlogs25@gmail.com` existed in `auth.users`, an attempt with either of them **did not and could not produce an `identity_already_exists` collision**. Instead, an exchange failure occurred, returning an error to the frontend callback.
+   - For `vittala.t1@gmail.com`, account linking is intentionally disabled, preserving existing email/password authentication security without automatic account merging.
+
+2. **The Indefinite Guard Trap in `ProtectedRoute.tsx`**:
+   In `src/components/ProtectedRoute.tsx`:
+   ```typescript
+   if (loading || (!user && hasCallbackInUrl)) {
+     return <Loader ... "Verifying security credentials..." />;
+   }
+   ```
+   When `getSession()` completed:
+   - Whether the exchange failed due to provider error, expired callback, or unlinked identity, `user` remained `null` and `loading` became `false`.
+   - However, `hasCallbackInUrl` remained `true` because the browser's `window.location.search` or hash still retained callback parameters.
+   - As a consequence, `(!user && hasCallbackInUrl)` evaluated to `true` permanently.
+   - The user was trapped indefinitely on the loader, and the actual error returned by Supabase was hidden from both user and logs.
+
+3. **Ephemeral URL Parameters Lingering**:
+   Neither Supabase nor the application stripped `code=` or `error=` from `window.location.search` when exchange failed.
+
+### 5.3 Remediation Applied
+1. **Simplified Route Guarding (`src/components/ProtectedRoute.tsx`)**:
+   Removed `(!user && hasCallbackInUrl)` from the loader condition. Route loading is strictly governed by `loading`. When `loading` completes, if `!user`, the user is cleanly redirected to `/signin?returnUrl=...`.
+2. **URL Parameter Sanitization (`src/context/AuthContext.tsx`)**:
+   Once `getSession()` settles (success or failure), `window.history.replaceState` sanitizes the URL to remove `code=`, `error=`, and hash fragments, preventing reload loops.
+3. **Surfacing Authentication & OAuth Errors (`src/pages/SignIn.tsx`)**:
+   `SignIn.tsx` now captures `profileLoadError` and `urlOAuthError` directly from `useAuth()`. Any provider failure (including `access_denied`, `server_error`, or `identity_already_exists`) is immediately rendered in the UI alert banner, guaranteeing full visibility.
+4. **Security Boundaries Preserved**:
+   - `Allow unverified email linking` is **NOT enabled**.
+   - Password authentication remains completely functional.
+   - Production migrations remain completely untouched.
 
 ---
 
-## 6. Required Action for Human Verification
+## 6. Verification & Test Suite Results
+
+| Test Suite / Tool | Command | Result | Details |
+| :--- | :--- | :---: | :--- |
+| **Onboarding & Auth Tests** | `node scripts/verify-onboarding-and-auth.mjs` | **PASS** | Updated Test 9 to verify that when loading finishes unauthenticated, the guard cleanly redirects rather than freezing. |
+| **All Test Suites** | `npm run test:all` | **PASS** | 5 verification suites passed: RPC consistency (12/12), Excel export sanitization, Auth export, Backend hardening. |
+| **Linter** | `npm run lint` | **PASS** | 119 files scanned. **0 errors**. |
+| **Production Build** | `npm run build` | **PASS** | Clean build (`tsc -b && vite build`) generated. |
+
+---
+
+## 7. Required Action for Human Verification
 
 > [!IMPORTANT]
 > **Account Linking in Supabase Auth**:
 > If the administrator or student signs in using a Google account whose email already exists in `auth.users` under the `email` provider (e.g. `vittala.t1@gmail.com`), Supabase by default will prevent automatic account linking unless enabled.
 > 
 > In **Supabase Dashboard** → **Authentication** → **Providers** → **Google**:
-> Ensure that **"Allow unverified email linking"** or manual account linking is enabled if administrators intend to sign in interchangeably via both password and Google OAuth with the same email address.
+> Ensure that **"Allow unverified email linking"** (or **"Link accounts with same email"**) is enabled if you wish to sign in with Google using `vittala.t1@gmail.com`.
 > 
-> For new students signing in with Google for the first time, account creation is fully enabled and will route them directly to `/onboarding`.
+> Alternatively:
+> - Sign in using email and password on `/signin` (which works immediately).
+> - Sign in with a distinct Google account, which will register as a new student and route cleanly to `/onboarding`.
 
 ---
 
-## 7. Next Step
+## 8. Next Step
 
 All code fixes are in place, verified locally, and ready to be committed and deployed to Vercel upon your approval.
 Migrations on the production database remain untouched (Stage 4 has not been executed).

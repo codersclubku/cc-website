@@ -401,14 +401,9 @@ console.log('✓ Administrator registration auditability and authorization bound
 // -----------------------------------------------------------------------------
 console.log('Test 9: OAuth Callback Invariants and Race Condition Immunity');
 
-// 9a: Protected route evaluation when code callback is in flight
-function evaluateProtectedRouteGuard({ loading, user, searchParams, hash }) {
-  const hasCallbackInUrl = Boolean(
-    (searchParams && searchParams.includes('code=')) ||
-    (hash && hash.includes('access_token='))
-  );
-
-  if (loading || (!user && hasCallbackInUrl)) {
+// 9a: Protected route evaluation when code callback is in flight vs settled
+function evaluateProtectedRouteGuard({ loading, user }) {
+  if (loading) {
     return 'LOADER'; // Remains on loading screen while callback settles
   }
 
@@ -419,23 +414,23 @@ function evaluateProtectedRouteGuard({ loading, user, searchParams, hash }) {
   return 'PROCEED';
 }
 
-// Scenario 1: Initial load on /account with ?code= in URL before exchange finishes
+// Scenario 1: Initial load on /account while PKCE exchange is in flight
 assert.strictEqual(
-  evaluateProtectedRouteGuard({ loading: false, user: null, searchParams: '?code=oauth_code_123', hash: '' }),
+  evaluateProtectedRouteGuard({ loading: true, user: null }),
   'LOADER',
-  'Must show LOADER and NOT redirect to signin when callback code is in URL'
+  'Must show LOADER while session or OAuth exchange is loading'
 );
 
-// Scenario 2: Normal unauthenticated visit without code
+// Scenario 2: Exchange settles but authentication fails or yields no user
 assert.strictEqual(
-  evaluateProtectedRouteGuard({ loading: false, user: null, searchParams: '', hash: '' }),
+  evaluateProtectedRouteGuard({ loading: false, user: null }),
   'REDIRECT_SIGNIN',
-  'Must redirect to signin when genuinely unauthenticated'
+  'Must redirect to signin and NOT get stuck indefinitely on loader when unauthenticated'
 );
 
 // Scenario 3: Authenticated user
 assert.strictEqual(
-  evaluateProtectedRouteGuard({ loading: false, user: { id: 'u1' }, searchParams: '', hash: '' }),
+  evaluateProtectedRouteGuard({ loading: false, user: { id: 'u1' } }),
   'PROCEED',
   'Must proceed when authenticated'
 );

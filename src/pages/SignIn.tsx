@@ -8,7 +8,7 @@ import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
 
 export const SignIn: React.FC = () => {
-  const { user, profile, isAdmin, consentState, loading, signIn, signInWithGoogle } = useAuth();
+  const { user, profile, isAdmin, consentState, loading, signIn, signInWithGoogle, profileLoadError } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawReturnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo');
@@ -47,15 +47,16 @@ export const SignIn: React.FC = () => {
 
   // Capture OAuth callback error descriptions if redirected back with errors
   useEffect(() => {
-    if (urlOAuthError) {
-      const decoded = decodeURIComponent(urlOAuthError.replace(/\+/g, ' '));
+    const errorCandidate = urlOAuthError || (profileLoadError && !user ? profileLoadError : null);
+    if (errorCandidate) {
+      const decoded = decodeURIComponent(errorCandidate.replace(/\+/g, ' '));
       if (decoded.includes('already exists') || decoded.includes('identity_already_exists')) {
         setAuthError('An account with this email address already exists. Please sign in using your email and password.');
       } else {
         setAuthError(decoded);
       }
     }
-  }, [urlOAuthError]);
+  }, [urlOAuthError, profileLoadError, user]);
 
   useEffect(() => {
     if (lockoutSeconds <= 0) return;
