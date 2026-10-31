@@ -510,4 +510,81 @@ assert.strictEqual(extractOAuthError('', ''), null);
 
 console.log('✓ OAuth callback invariants, race condition immunity, and routing verified.\n');
 
+// -----------------------------------------------------------------------------
+// Test 10: Temporary Google Sign-In Shutdown & Auth Invariants
+// -----------------------------------------------------------------------------
+console.log('Test 10: Temporary Google Sign-In Shutdown Invariants');
+
+// 10a. Features configuration existence and state
+assert.ok(fs.existsSync('src/config/features.ts'), 'src/config/features.ts must exist');
+const featuresSource = fs.readFileSync('src/config/features.ts', 'utf8');
+assert.ok(
+  featuresSource.includes('export const GOOGLE_SIGNIN_ENABLED = false;'),
+  'GOOGLE_SIGNIN_ENABLED must be exported and set to false'
+);
+
+// 10b. SignIn page invariants
+const signinSource = fs.readFileSync('src/pages/SignIn.tsx', 'utf8');
+assert.ok(signinSource.includes('GOOGLE_SIGNIN_ENABLED'), 'SignIn.tsx must reference GOOGLE_SIGNIN_ENABLED');
+assert.ok(
+  signinSource.includes('Google Sign-In is temporarily unavailable. Please use your email and password to access your account.'),
+  'SignIn.tsx must display the professional notice when Google Sign-In is disabled'
+);
+assert.ok(
+  signinSource.includes('{GOOGLE_SIGNIN_ENABLED ? ('),
+  'SignIn.tsx must gate the Google Sign-In button behind GOOGLE_SIGNIN_ENABLED'
+);
+assert.ok(signinSource.includes('signIn(formData.email, formData.password)'), 'Email/password sign-in must remain wired');
+assert.ok(signinSource.includes('to="/forgot-password"'), 'Password reset navigation must remain accessible');
+
+// 10c. SignUp page invariants
+const signupSource = fs.readFileSync('src/pages/SignUp.tsx', 'utf8');
+assert.ok(signupSource.includes('GOOGLE_SIGNIN_ENABLED'), 'SignUp.tsx must reference GOOGLE_SIGNIN_ENABLED');
+assert.ok(
+  signupSource.includes('Google Sign-In is temporarily unavailable. Please use your email and password to access your account.'),
+  'SignUp.tsx must display the professional notice when Google Sign-In is disabled'
+);
+assert.ok(
+  signupSource.includes('{GOOGLE_SIGNIN_ENABLED ? ('),
+  'SignUp.tsx must gate the Google Sign-In button behind GOOGLE_SIGNIN_ENABLED'
+);
+assert.ok(signupSource.includes('signUp('), 'Email/password registration must remain wired');
+
+// 10d. AuthContext infrastructure invariants (Preserve OAuth infrastructure)
+const authSource = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
+assert.ok(authSource.includes('signInWithGoogle'), 'signInWithGoogle must remain implemented in AuthContext');
+assert.ok(authSource.includes("provider: 'google'"), 'Supabase Google OAuth provider configuration must remain untouched');
+assert.ok(authSource.includes('signIn:'), 'Email/password signIn must remain exposed');
+assert.ok(authSource.includes('signUp:'), 'Email/password signUp must remain exposed');
+assert.ok(authSource.includes('requestPasswordReset:'), 'Password reset must remain exposed');
+assert.ok(authSource.includes('updatePassword:'), 'Password update must remain exposed');
+
+// 10e. Protected sessions invariant: existing sessions and profiles remain valid
+const mockExistingGoogleSession = {
+  user: { id: 'existing-google-user', email: 'verified.student@ku.edu.in' },
+  profile: {
+    id: 'existing-google-user',
+    full_name: 'Ananya Rao',
+    usn: 'KU2024CS099',
+    department: 'Computer Science and Engineering',
+    year: '2nd Year',
+    semester: '3rd Semester'
+  },
+  isAdmin: false
+};
+assert.strictEqual(isProfileComplete(mockExistingGoogleSession.profile), true, 'Existing Google user profile is valid');
+assert.strictEqual(
+  resolveAuthenticatedRedirect({
+    user: mockExistingGoogleSession.user,
+    profile: mockExistingGoogleSession.profile,
+    isAdmin: false,
+    consentState: 'ACTIVE',
+    returnUrl: '/account'
+  }),
+  '/account',
+  'Existing authenticated Google user session must continue working directly'
+);
+
+console.log('✓ Temporary Google Sign-In shutdown and authentication invariants verified.\n');
+
 console.log('=== ALL ONBOARDING & AUTH UNIT TESTS PASSED ===');

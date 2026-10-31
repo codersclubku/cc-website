@@ -169,6 +169,21 @@ check('SignIn, SignUp, and Onboarding integrate open redirect mitigation', () =>
   assert.ok(authContextCode.includes('sanitizeRedirectPath(returnPath, \'/account\')'));
 });
 
+check('Temporary Google Sign-In shutdown notice is displayed and OAuth infrastructure is preserved', () => {
+  const signinCode = fs.readFileSync('src/pages/SignIn.tsx', 'utf8');
+  const signupCode = fs.readFileSync('src/pages/SignUp.tsx', 'utf8');
+  const authContextCode = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
+  const featuresCode = fs.readFileSync('src/config/features.ts', 'utf8');
+
+  assert.ok(featuresCode.includes('export const GOOGLE_SIGNIN_ENABLED = false;'));
+  assert.ok(signinCode.includes('Google Sign-In is temporarily unavailable. Please use your email and password to access your account.'));
+  assert.ok(signupCode.includes('Google Sign-In is temporarily unavailable. Please use your email and password to access your account.'));
+  assert.ok(signinCode.includes('{GOOGLE_SIGNIN_ENABLED ? ('));
+  assert.ok(signupCode.includes('{GOOGLE_SIGNIN_ENABLED ? ('));
+  assert.ok(authContextCode.includes('signInWithGoogle'));
+  assert.ok(authContextCode.includes("provider: 'google'"));
+});
+
 // -----------------------------------------------------------------------------
 // 3. STUDENT PROFILE & KISHKINDA UNIVERSITY USN INVARIANTS
 // -----------------------------------------------------------------------------

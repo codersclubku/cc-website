@@ -6,6 +6,7 @@ import { signUpSchema, DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS, sanitizeRedirectP
 import type { SignUpFormData } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
+import { GOOGLE_SIGNIN_ENABLED } from '../config/features';
 
 export const SignUp: React.FC = () => {
   const { user, profile, isAdmin, consentState, loading, signUp, signInWithGoogle } = useAuth();
@@ -194,20 +195,29 @@ export const SignUp: React.FC = () => {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={handleGoogleAuth}
-            disabled={isSubmitting}
-            className="w-full min-h-[44px] px-4 py-2 border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-raised)] text-[var(--text-strong)] text-sm font-mono font-semibold rounded-sm flex items-center justify-center gap-3 transition-colors"
-          >
-            <span>Continue with Google</span>
-          </button>
+          {GOOGLE_SIGNIN_ENABLED ? (
+            <>
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                disabled={isSubmitting}
+                className="w-full min-h-[44px] px-4 py-2 border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-raised)] text-[var(--text-strong)] text-sm font-mono font-semibold rounded-sm flex items-center justify-center gap-3 transition-colors"
+              >
+                <span>Continue with Google</span>
+              </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-[1px] bg-[var(--border)]" />
-            <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">or email</span>
-            <div className="flex-1 h-[1px] bg-[var(--border)]" />
-          </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-[1px] bg-[var(--border)]" />
+                <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">or email</span>
+                <div className="flex-1 h-[1px] bg-[var(--border)]" />
+              </div>
+            </>
+          ) : (
+            <Alert
+              type="info"
+              message="Google Sign-In is temporarily unavailable. Please use your email and password to access your account."
+            />
+          )}
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
             <div className="sr-only" aria-hidden="true">
