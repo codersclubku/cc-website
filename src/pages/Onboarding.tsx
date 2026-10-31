@@ -172,10 +172,10 @@ export const Onboarding: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
-          {/* Read-Only University Email */}
+          {/* Read-Only Email */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-mono uppercase tracking-wider text-[var(--text-muted)]">
-              University Email
+              Email Address
             </label>
             <input
               type="email"
@@ -299,7 +299,7 @@ export const Onboarding: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-[var(--text)] leading-relaxed m-0 font-sans">
-              Your name, university email, USN, and department are processed in accordance with the Digital Personal Data Protection Act, 2023 for student event registration, QR attendance verification, and club records under Kishkinda University policy.
+              Your name, email address, USN, and department are processed in accordance with the Digital Personal Data Protection Act, 2023 for student event registration, QR attendance verification, and club records under Kishkinda University policy.
             </p>
             <div className="flex items-center justify-between pt-1 border-t border-[var(--border)]">
               <Link

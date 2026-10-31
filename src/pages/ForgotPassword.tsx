@@ -48,7 +48,7 @@ export const ForgotPassword: React.FC = () => {
               Reset password
             </h1>
             <p className="text-sm text-[var(--text-muted)] m-0">
-              Enter your registered university email to receive a secure recovery link.
+              Enter your registered email address to receive a secure recovery link.
             </p>
           </div>
 
@@ -68,7 +68,7 @@ export const ForgotPassword: React.FC = () => {
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="forgot-email" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                  University Email Address
+                  Email Address
                 </label>
                 <input
                   id="forgot-email"

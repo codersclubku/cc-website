@@ -168,7 +168,7 @@ export const SignUp: React.FC = () => {
               Create student account
             </h1>
             <p className="text-sm text-[var(--text-muted)] m-0">
-              Sign up once with your university credentials to register for hackathons and workshops in one click.
+              Sign up once with your student details to register for hackathons and workshops in one click.
             </p>
           </div>
 
@@ -258,7 +258,7 @@ export const SignUp: React.FC = () => {
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="signup-email" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                University Email Address <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
+                Email Address <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
               </label>
               <input
                 id="signup-email"
@@ -406,7 +406,7 @@ export const SignUp: React.FC = () => {
                 Data Protection & Privacy Notice
               </span>
               <p className="text-xs text-[var(--text)] leading-relaxed m-0">
-                In compliance with the Digital Personal Data Protection Act, 2023, Coders Club collects your name, university email, USN, department, and semester exclusively for event registration, attendance verification, and college record keeping. You may withdraw consent or request deletion at any time from your account page.
+                In compliance with the Digital Personal Data Protection Act, 2023, Coders Club collects your name, email address, USN, department, and semester exclusively for event registration, attendance verification, and college record keeping. You may withdraw consent or request deletion at any time from your account page.
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Link to="/privacy-policy" target="_blank" className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] underline">

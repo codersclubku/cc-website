@@ -334,7 +334,7 @@ export const PrivacyPolicy: React.FC = () => {
               <strong>Actual Platform Implementation &amp; Codebase Practice:</strong> The platform does <strong>not collect dates of birth, birth years, or user ages</strong> during registration or onboarding. The software does <strong>not perform age verification</strong>, does <strong>not determine whether an enrolled student is over or under 18</strong>, and does <strong>not implement verifiable parental consent mechanisms</strong> or guardian authorization workflows.
             </li>
             <li>
-              <strong>Enrolment-Based Qualification:</strong> Account creation, event ticketing, and club participation are governed solely by possessing valid university academic credentials (university email, valid Kishkinda University USN formatted as <code>KUB24CSE198</code>, department, and semester). Any student admitted to the university (including first-year collegiate students who may be 17 years of age) participates under the standard collegiate onboarding workflow without age gating.
+              <strong>Enrolment-Based Qualification:</strong> Account creation, event ticketing, and club participation are governed solely by possessing valid academic credentials (email address, valid Kishkinda University USN formatted as <code>KUB24CSE198</code>, department, and semester). Any student admitted to the university (including first-year collegiate students who may be 17 years of age) participates under the standard collegiate onboarding workflow without age gating.
             </li>
           </ul>
           <p className="text-xs font-mono text-[var(--text-muted)] m-0">
