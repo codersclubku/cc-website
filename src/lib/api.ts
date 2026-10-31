@@ -750,7 +750,11 @@ export async function completeStudentOnboardingApi(data: {
       throw new ApiError(mapApiError(error), error.code || 'UNKNOWN');
     }
 
-    return result as StudentProfile;
+    const profileData = (result && typeof result === 'object' && 'profile' in (result as any))
+      ? (result as any).profile
+      : result;
+
+    return profileData as StudentProfile;
   }
 
   // Two-Phase Atomic Mock Persistence

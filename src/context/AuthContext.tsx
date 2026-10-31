@@ -320,13 +320,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         version:         'v1.0-2026'
       });
 
-      if (savedProfile.id !== submissionUid) {
+      const returnedProfile = (savedProfile && typeof savedProfile === 'object' && 'profile' in (savedProfile as any))
+        ? (savedProfile as any).profile
+        : savedProfile;
+
+      if (returnedProfile?.id !== submissionUid) {
         throw new Error('Security assertion failed: returned profile ID mismatch');
       }
 
       if (mountedRef.current && authOpRef.current === currentOp && activeUserIdRef.current === submissionUid) {
         setProfile({
-          ...savedProfile,
+          ...returnedProfile,
           email: user.email,
           email_verified: Boolean(user.email_confirmed_at)
         });
