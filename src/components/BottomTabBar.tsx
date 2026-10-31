@@ -67,7 +67,7 @@ export const BottomTabBar: React.FC = () => {
       <nav
         aria-label="Mobile primary navigation"
         style={{
-          backgroundColor: 'color-mix(in srgb, var(--surface-1) 60%, transparent)',
+          backgroundColor: 'color-mix(in srgb, var(--bg) 65%, transparent)',
           WebkitBackdropFilter: 'blur(24px)',
           backdropFilter: 'blur(24px)',
         }}

@@ -6,9 +6,9 @@
     "semantic_hash": "029f4905006c1fffd96bc863e2d98d3e"
   },
   "package.json": {
-    "mtime": 1793453271.9374983,
-    "seen": 1793455725.2772226,
-    "ast_hash": "24687692f8d0b72e9e552b4d0462b255",
+    "mtime": 1793462255.001392,
+    "seen": 1793462963.654314,
+    "ast_hash": "4b43dedf9e618f7cda68cf084b3813e7",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -138,9 +138,9 @@
     "semantic_hash": "e8119a333a40dc8a15c61350efee884a"
   },
   "src/components/BottomTabBar.tsx": {
-    "mtime": 1793456326.8854685,
-    "seen": 1793456585.8181021,
-    "ast_hash": "4c53c0a93cbefc7c95e79f756a9f99ef",
+    "mtime": 1793462871.7919059,
+    "seen": 1793462963.6586356,
+    "ast_hash": "5b51278ae9fe1df41f42cfc842c0f5a3",
     "semantic_hash": ""
   },
   "src/components/BrailleOrbitIllustration.tsx": {
@@ -510,15 +510,15 @@
     "semantic_hash": "0f63d0fac53d0f6f4b2f4ef501fb1460"
   },
   "src/pages/SignIn.tsx": {
-    "mtime": 1793455530.5794015,
-    "seen": 1793455725.289389,
-    "ast_hash": "9c1e9ad84d7130f4adf1bd88cc5fb320",
+    "mtime": 1793462044.117726,
+    "seen": 1793462236.8809395,
+    "ast_hash": "6291f2e6bd089965dcc62122b2800900",
     "semantic_hash": ""
   },
   "src/pages/SignUp.tsx": {
-    "mtime": 1793456327.4214463,
-    "seen": 1793456585.8271685,
-    "ast_hash": "c0a2f8f613f94f76f8426ddefbbe8cd8",
+    "mtime": 1793462044.2028174,
+    "seen": 1793462236.880942,
+    "ast_hash": "8388b1772fe492fd66b379069a2269c2",
     "semantic_hash": ""
   },
   "src/pages/Team.tsx": {
@@ -1717,9 +1717,9 @@
     "semantic_hash": ""
   },
   "scripts/verify-onboarding-and-auth.mjs": {
-    "mtime": 1793449495.8111672,
-    "seen": 1793451228.5734296,
-    "ast_hash": "876c49dc21749366fab5c2b3cf4f0fe5",
+    "mtime": 1793461931.121141,
+    "seen": 1793461987.602055,
+    "ast_hash": "70fb2bad43bbd6a79c5983bfb0a8239a",
     "semantic_hash": ""
   },
   "scripts/verify-supabase-staging.mjs": {
@@ -1801,9 +1801,9 @@
     "semantic_hash": ""
   },
   "scripts/verify-full-regression.mjs": {
-    "mtime": 1793453276.6432455,
-    "seen": 1793455725.2787328,
-    "ast_hash": "77c07309ed9e9f1a8c831b693c437317",
+    "mtime": 1793461938.9234154,
+    "seen": 1793461987.6017838,
+    "ast_hash": "0d4c08d00c9d244e1018c514202e01f2",
     "semantic_hash": ""
   },
   "src/pages/PrivacyPolicy.tsx": {
@@ -1858,6 +1858,24 @@
     "mtime": 1793461041.8019278,
     "seen": 1793461228.1286135,
     "ast_hash": "b2b583016037cf972de80ca0dc9a31f8",
+    "semantic_hash": ""
+  },
+  "src/config/features.ts": {
+    "mtime": 1793462041.5363986,
+    "seen": 1793462236.8767016,
+    "ast_hash": "b9970511dc44919cb2b6b4549a905271",
+    "semantic_hash": ""
+  },
+  "docs/GOOGLE_SIGNIN_TEMPORARILY_DISABLED.md": {
+    "mtime": 1793462041.311358,
+    "seen": 1793462236.8849974,
+    "ast_hash": "8f2374f4d93ad62b462b45c21f0ec879",
+    "semantic_hash": ""
+  },
+  "scripts/verify-auth-scenarios.mjs": {
+    "mtime": 1793462255.0709743,
+    "seen": 1793462963.656225,
+    "ast_hash": "215defb4b96515a60ee0a3140fb5c653",
     "semantic_hash": ""
   }
 }
