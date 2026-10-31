@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { fileURLToPath } from 'node:url';

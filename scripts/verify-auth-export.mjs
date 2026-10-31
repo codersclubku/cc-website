@@ -80,7 +80,6 @@ async function run() {
 
   const CAPACITY = 3;
   let currentRegisteredCount = 0;
-  const parallelResults = [];
 
   const registrationQueue = Array.from({ length: 10 }, (_, i) => ({
     studentId: `parallel-student-${i}`,

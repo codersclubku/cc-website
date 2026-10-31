@@ -8,6 +8,10 @@ import { AdminTableSkeleton } from '../../components/Skeleton';
 import { EmptyState } from '../../components/EmptyState';
 import { Alert } from '../../components/Alert';
 
+function getExportDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export const AdminStudents: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const [students, setStudents] = useState<StudentProfile[]>([]);
@@ -114,7 +118,7 @@ export const AdminStudents: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const dateStr = new Date().toISOString().split('T')[0];
+      const dateStr = getExportDateString();
       link.setAttribute('download', `coders-club-registrations-${dateStr}.xlsx`);
       document.body.appendChild(link);
       link.click();

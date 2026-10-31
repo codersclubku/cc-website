@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth, isProfileComplete } from '../context/AuthContext';
-import { DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS, isValidUsn } from '../lib/validation';
+import { DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS, isValidUsn, sanitizeRedirectPath } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
 import { ShieldCheck, LogOut, ExternalLink, Check } from 'lucide-react';
@@ -38,7 +38,8 @@ export const Onboarding: React.FC = () => {
   const { user, profile, isAdmin, consentState, completeOnboarding, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo') || '/account';
+  const rawReturnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo');
+  const returnUrl = sanitizeRedirectPath(rawReturnUrl, '/account');
   const isMountedRef = useRef(true);
 
   const [formData, setFormData] = useState({
@@ -302,7 +303,7 @@ export const Onboarding: React.FC = () => {
             </p>
             <div className="flex items-center justify-between pt-1 border-t border-[var(--border)]">
               <Link
-                to="/privacy"
+                to="/privacy-policy"
                 target="_blank"
                 className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] inline-flex items-center gap-1 underline"
               >

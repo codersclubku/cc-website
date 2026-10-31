@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 export interface HeroSlide {
@@ -80,7 +80,10 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
   showDots = true,
   ariaLabel = 'Kishkinda University Campus Slideshow',
 }) => {
-  const activeSlides = slideIndex !== undefined ? [HERO_SLIDES[slideIndex]] : (slides || HERO_SLIDES);
+  const activeSlides = useMemo(
+    () => (slideIndex !== undefined ? [HERO_SLIDES[slideIndex]] : (slides || HERO_SLIDES)),
+    [slideIndex, slides]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasRealPhotos, setHasRealPhotos] = useState(true);
   const prefersReduced = useReducedMotion();

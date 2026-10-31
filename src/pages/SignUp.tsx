@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useAuth, isProfileComplete } from '../context/AuthContext';
-import { signUpSchema, DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS } from '../lib/validation';
+import { signUpSchema, DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS, sanitizeRedirectPath } from '../lib/validation';
 import type { SignUpFormData } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
@@ -12,7 +12,7 @@ export const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawReturnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo');
-  const returnUrl = (rawReturnUrl && rawReturnUrl !== '/signin' && rawReturnUrl !== '/signup') ? rawReturnUrl : '/account';
+  const returnUrl = sanitizeRedirectPath(rawReturnUrl, '/account');
 
   // If user is already authenticated or becomes authenticated via OAuth, redirect accordingly
   useEffect(() => {
@@ -145,8 +145,8 @@ export const SignUp: React.FC = () => {
               <Link to="/signin" className="cc-btn cc-btn--primary min-h-[44px] text-xs font-mono font-bold">
                 Go to Sign In
               </Link>
-              <Link to="/privacy" className="cc-btn cc-btn--secondary min-h-[44px] text-xs font-mono font-semibold">
-                Read Privacy Notice
+              <Link to="/privacy-policy" className="cc-btn cc-btn--secondary min-h-[44px] text-xs font-mono font-semibold">
+                Read Privacy Policy
               </Link>
             </div>
           </div>
@@ -398,9 +398,15 @@ export const SignUp: React.FC = () => {
               <p className="text-xs text-[var(--text)] leading-relaxed m-0">
                 In compliance with the Digital Personal Data Protection Act, 2023, Coders Club collects your name, university email, USN, department, and semester exclusively for event registration, attendance verification, and college record keeping. You may withdraw consent or request deletion at any time from your account page.
               </p>
-              <Link to="/privacy" target="_blank" className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] underline">
-                View Full Privacy Notice →
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link to="/privacy-policy" target="_blank" className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] underline">
+                  View Privacy Policy →
+                </Link>
+                <span className="text-xs text-[var(--text-muted)]">•</span>
+                <Link to="/terms" target="_blank" className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] underline">
+                  View Terms of Service →
+                </Link>
+              </div>
 
               <div className="flex items-start gap-3 pt-2 border-t border-[var(--border)]">
                 <input

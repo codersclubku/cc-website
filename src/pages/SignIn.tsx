@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth, isProfileComplete } from '../context/AuthContext';
-import { signInSchema } from '../lib/validation';
+import { signInSchema, sanitizeRedirectPath } from '../lib/validation';
 import type { SignInFormData } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
@@ -12,7 +12,7 @@ export const SignIn: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawReturnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo');
-  const returnUrl = (rawReturnUrl && rawReturnUrl !== '/signin' && rawReturnUrl !== '/signup') ? rawReturnUrl : '/account';
+  const returnUrl = sanitizeRedirectPath(rawReturnUrl, '/account');
 
   const hashError = typeof window !== 'undefined' && window.location.hash
     ? new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash).get('error_description')
@@ -272,6 +272,15 @@ export const SignIn: React.FC = () => {
               Club Coordinator or Admin?{' '}
               <Link to="/admin/login" className="text-[var(--text-muted)] hover:text-[var(--text-strong)] underline">
                 Admin portal
+              </Link>
+            </div>
+            <div className="pt-2 border-t border-[var(--border)] text-[11px] font-mono text-[var(--text-muted)] flex items-center justify-center gap-3">
+              <Link to="/privacy-policy" className="hover:text-[var(--text-strong)] underline">
+                Privacy Policy
+              </Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-[var(--text-strong)] underline">
+                Terms of Service
               </Link>
             </div>
           </div>

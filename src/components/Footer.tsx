@@ -70,8 +70,13 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-xs text-[var(--on-brand-muted)] hover:text-white underline underline-offset-4">
+                <Link to="/privacy-policy" className="text-xs text-[var(--on-brand-muted)] hover:text-white underline underline-offset-4">
                   Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-xs text-[var(--on-brand-muted)] hover:text-white underline underline-offset-4">
+                  Terms of Service
                 </Link>
               </li>
             </ul>
@@ -176,6 +181,15 @@ export const Footer: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-xs font-mono text-[var(--on-brand-muted)]">
             <span>© 2026 Coders Club. All rights reserved.</span>
+            <div className="flex items-center gap-3">
+              <Link to="/privacy-policy" className="hover:text-white underline underline-offset-2">
+                Privacy
+              </Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-white underline underline-offset-2">
+                Terms
+              </Link>
+            </div>
             <button
               type="button"
               onClick={scrollToTop}

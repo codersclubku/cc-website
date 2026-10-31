@@ -47,7 +47,7 @@ function parseFunctionsFromSql(sql, filename) {
 
     // Find grants and revokes for this function in the file
     const baseName = cleanName.split('.')[1];
-    const fnRegexEscaped = cleanName.replace('.', '\\.');
+    const _fnRegexEscaped = cleanName.replace('.', '\\.');
     const revokeRegex = new RegExp(`revoke\\s+all\\s+on\\s+function\\s+(?:public\\.)?${baseName}[^;]*from\\s+([^;]+);`, 'gi');
     const grantRegex = new RegExp(`grant\\s+execute\\s+on\\s+function\\s+(?:public\\.)?${baseName}[^;]*to\\s+([^;]+);`, 'gi');
 

@@ -264,7 +264,7 @@ async function verifyDynamicMigrationsAndSecurityDefiner() {
   );
 
   // Now audit the FINAL EFFECTIVE STATE of every unique function signature
-  for (const [sig, data] of functionRegistry.entries()) {
+  for (const [_sig, data] of functionRegistry.entries()) {
     const eff = data.effective;
 
     // 1. All final functions in public schema must be SECURITY DEFINER
@@ -420,7 +420,7 @@ async function verifyLiveSupabase() {
     const testStudents = [];
     for (let i = 0; i < 5; i++) {
       const email = `zz-test-attendee-${i}-${Date.now()}@kishkindauniversity.edu.in`;
-      const { data: userData, error: userErr } = await adminClient.auth.admin.createUser({
+      const { data: userData, error: _userErr } = await adminClient.auth.admin.createUser({
         email,
         password: 'Password123!Secure',
         email_confirm: true,

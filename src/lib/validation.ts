@@ -219,3 +219,25 @@ export function sanitizeExcelValue(value: unknown): string {
   return trimmed;
 }
 
+export function isSafeRedirectPath(path: string | null | undefined): boolean {
+  if (!path || typeof path !== 'string') return false;
+  const trimmed = path.trim();
+  return (
+    trimmed.startsWith('/') &&
+    !trimmed.startsWith('//') &&
+    !trimmed.startsWith('/\\') &&
+    !trimmed.includes('\\') &&
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)
+  );
+}
+
+export function sanitizeRedirectPath(path: string | null | undefined, fallback: string = '/account'): string {
+  if (isSafeRedirectPath(path)) {
+    const trimmed = path!.trim();
+    if (trimmed !== '/signin' && trimmed !== '/signup') {
+      return trimmed;
+    }
+  }
+  return fallback;
+}
+

@@ -27,7 +27,7 @@ fs.copyFileSync(path.join(publicLogoDir, '3.svg'), path.join(publicLogoDir, 'cc-
 fs.copyFileSync(path.join(publicLogoDir, '4.svg'), path.join(publicLogoDir, 'cc-logo-stacked-black.svg'));
 
 // Read 1.svg and extract exact paths
-const svgContent = fs.readFileSync(path.join(publicLogoDir, '1.svg'), 'utf8');
+const _svgContent = fs.readFileSync(path.join(publicLogoDir, '1.svg'), 'utf8');
 
 // Create a component that renders the exact SVG paths from user's file
 console.log('Logo files copied and mapped successfully.');

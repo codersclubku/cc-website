@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Calendar, Users, MoreHorizontal, X, Sun, Moon, Laptop, Info, Image, Mail, LogOut, MessageSquarePlus } from 'lucide-react';
+import { Home, Calendar, Users, MoreHorizontal, X, Sun, Moon, Laptop, Info, Image, Mail, LogOut, MessageSquarePlus, ShieldCheck, Scale } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -191,6 +191,22 @@ export const BottomTabBar: React.FC = () => {
                 >
                   <MessageSquarePlus className="w-4 h-4 text-[var(--accent)]" />
                   <span>Feedback</span>
+                </Link>
+                <Link
+                  to="/privacy-policy"
+                  onClick={() => setMoreOpen(false)}
+                  className="min-h-[44px] px-3 flex items-center gap-3 rounded-sm text-sm font-sans font-medium text-[var(--text)] hover:bg-[var(--surface-2)] no-underline"
+                >
+                  <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
+                  <span>Privacy Policy</span>
+                </Link>
+                <Link
+                  to="/terms"
+                  onClick={() => setMoreOpen(false)}
+                  className="min-h-[44px] px-3 flex items-center gap-3 rounded-sm text-sm font-sans font-medium text-[var(--text)] hover:bg-[var(--surface-2)] no-underline"
+                >
+                  <Scale className="w-4 h-4 text-[var(--accent)]" />
+                  <span>Terms of Service</span>
                 </Link>
               </div>
 

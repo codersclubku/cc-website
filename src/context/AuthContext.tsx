@@ -12,6 +12,7 @@ import {
 } from '../lib/api';
 import type { StudentProfile, ProfileQueryResult, ConsentStatusResult } from '../lib/api';
 import type { SignUpFormData } from '../lib/validation';
+import { sanitizeRedirectPath } from '../lib/validation';
 
 export interface AuthUser {
   id: string;
@@ -289,7 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       isCancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, user?.email, user?.email_confirmed_at]);
 
   // ---------------------------------------------------------------------------
   // 3. User Actions (Guarded against stale async states and session invalidation)
@@ -580,9 +581,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async (returnPath?: string): Promise<{ success: boolean; error?: string }> => {
     if (isSupabaseConfigured && supabase) {
       const allowedDomain = import.meta.env.VITE_ALLOWED_EMAIL_DOMAIN;
-      const targetUrl = returnPath
-        ? `${window.location.origin}${returnPath.startsWith('/') ? returnPath : `/${returnPath}`}`
-        : `${window.location.origin}/account`;
+      const safeReturn = sanitizeRedirectPath(returnPath, '/account');
+      const targetUrl = `${window.location.origin}${safeReturn}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

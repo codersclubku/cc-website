@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
     const data = fs.readFileSync(filePath);
     res.writeHead(200, { 'Content-Type': contentType });
     res.end(data);
-  } catch (err) {
+  } catch {
     res.writeHead(404);
     res.end();
   }
@@ -57,7 +57,7 @@ server.listen(4173, async () => {
   try {
     const res = await fetch('http://127.0.0.1:9222/json/version');
     versionInfo = await res.json();
-  } catch (e) {
+  } catch {
     edgeProc.kill();
     server.close();
     process.exit(1);

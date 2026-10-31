@@ -25,7 +25,8 @@ const Team = lazy(() => import('./pages/Team').then((m) => ({ default: m.Team })
 const Gallery = lazy(() => import('./pages/Gallery').then((m) => ({ default: m.Gallery })));
 const Contact = lazy(() => import('./pages/Contact').then((m) => ({ default: m.Contact })));
 const Feedback = lazy(() => import('./pages/Feedback').then((m) => ({ default: m.Feedback })));
-const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
+const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 const SignUp = lazy(() => import('./pages/SignUp').then((m) => ({ default: m.SignUp })));
@@ -125,7 +126,10 @@ export const App: React.FC = () => {
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/feedback" element={<Feedback />} />
-                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/terms-of-service" element={<Terms />} />
                   <Route path="/signup" element={<SignUp />} />
                   <Route path="/signin" element={<SignIn />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />

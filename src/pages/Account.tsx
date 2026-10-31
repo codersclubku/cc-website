@@ -539,7 +539,7 @@ export const Account: React.FC = () => {
                 Your data is processed in accordance with the Digital Personal Data Protection Act, 2023. You can review the notice terms anytime.
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link to="/privacy" target="_blank" className="cc-btn cc-btn--secondary cc-btn--sm text-xs font-mono">
+                <Link to="/privacy-policy" target="_blank" className="cc-btn cc-btn--secondary cc-btn--sm text-xs font-mono">
                   View Privacy Notice
                 </Link>
                 <button
