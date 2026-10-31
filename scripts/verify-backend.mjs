@@ -128,6 +128,229 @@ async function verifySchemaDefinitions() {
   );
 }
 
+function stripCommentsAndStrings(sql) {
+  // Replace block comments /* ... */
+  let s = sql.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  // Replace line comments -- ...
+  s = s.replace(/--.*$/gm, ' ');
+  // Replace single-quoted string literals with empty string literal ''
+  s = s.replace(/'(?:''|[^'])*'/g, "''");
+  return s;
+}
+
+function normalizeParams(rawParams) {
+  if (!rawParams || !rawParams.trim()) return '';
+  return rawParams
+    .split(',')
+    .map(p => {
+      const cleaned = p.trim().replace(/\s+/g, ' ');
+      const parts = cleaned.split(' ');
+      if (parts.length === 1) return parts[0].toLowerCase();
+      const defIdx = parts.findIndex(x => x.toLowerCase() === 'default');
+      const typeParts = defIdx > 0 ? parts.slice(1, defIdx) : parts.slice(1);
+      return typeParts.join(' ').toLowerCase();
+    })
+    .join(', ');
+}
+
+function extractAppTables(migrationContents) {
+  const tables = new Set();
+  const tableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?([a-zA-Z0-9_]+)\b/gi;
+  const viewRegex = /create\s+(?:or\s+replace\s+)?view\s+(?:public\.)?([a-zA-Z0-9_]+)\b/gi;
+  for (const sql of migrationContents) {
+    const stripped = stripCommentsAndStrings(sql);
+    let match;
+    while ((match = tableRegex.exec(stripped)) !== null) {
+      tables.add(match[1].toLowerCase());
+    }
+    while ((match = viewRegex.exec(stripped)) !== null) {
+      tables.add(match[1].toLowerCase());
+    }
+  }
+  return Array.from(tables);
+}
+
+async function verifyDynamicMigrationsAndSecurityDefiner() {
+  const migrationsDir = path.resolve(process.cwd(), 'supabase', 'migrations');
+  if (!fs.existsSync(migrationsDir)) {
+    record('Migration Directory Exists', false, 'supabase/migrations not found');
+    return;
+  }
+
+  const migrationFiles = fs.readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.sql'))
+    .sort();
+  record('Migrations Discovered', migrationFiles.length > 0, `Found ${migrationFiles.length} migration files in chronological order`);
+
+  const fileContents = migrationFiles.map(f => fs.readFileSync(path.join(migrationsDir, f), 'utf8'));
+  const appTables = extractAppTables(fileContents);
+  record('Dynamic Table Discovery', appTables.length >= 8, `Discovered ${appTables.length} application tables/views: ${appTables.join(', ')}`);
+
+  // Map to store chronological history of function signatures
+  const functionRegistry = new Map();
+  let totalDeclarations = 0;
+
+  for (let fileIdx = 0; fileIdx < migrationFiles.length; fileIdx++) {
+    const file = migrationFiles[fileIdx];
+    const sqlContent = fileContents[fileIdx];
+
+    const funcRegex = /create\s+(?:or\s+replace\s+)?function\s+([a-zA-Z0-9_.]+)\s*\(([\s\S]*?)\)\s*returns\s+([\s\S]*?)as\s+\$\$([\s\S]*?)\$\$\s*;/gi;
+    let match;
+
+    while ((match = funcRegex.exec(sqlContent)) !== null) {
+      totalDeclarations++;
+      const rawName = match[1];
+      const params = match[2].trim();
+      const options = match[3];
+      const body = match[4];
+
+      const cleanName = rawName.startsWith('public.') ? rawName : `public.${rawName}`;
+      const normSig = `${cleanName}(${normalizeParams(params)})`;
+      const isSecDef = /security\s+definer/i.test(options);
+      const isTrigger = /returns\s+trigger/i.test(`returns ${options}`);
+      const searchPathMatch = /set\s+search_path\s*=\s*(['"]?)([^'";,\s]*)\1/i.exec(options);
+      const searchPath = searchPathMatch ? searchPathMatch[2] : null;
+
+      // Extract revokes and grants for this signature in this file
+      const baseName = cleanName.split('.')[1];
+      const revokeRegex = new RegExp(`revoke\\s+all\\s+on\\s+function\\s+(?:public\\.)?${baseName}[^;]*from\\s+([^;]+);`, 'gi');
+      const grantRegex = new RegExp(`grant\\s+execute\\s+on\\s+function\\s+(?:public\\.)?${baseName}[^;]*to\\s+([^;]+);`, 'gi');
+
+      const revokes = [];
+      let rMatch;
+      while ((rMatch = revokeRegex.exec(sqlContent)) !== null) {
+        revokes.push(rMatch[1].trim().toLowerCase());
+      }
+
+      const grants = [];
+      let gMatch;
+      while ((gMatch = grantRegex.exec(sqlContent)) !== null) {
+        grants.push(gMatch[1].trim().toLowerCase());
+      }
+
+      if (!functionRegistry.has(normSig)) {
+        functionRegistry.set(normSig, {
+          normSig,
+          cleanName,
+          baseName,
+          exactSignature: `${cleanName}(${params})`,
+          history: [],
+          effective: null
+        });
+      }
+
+      const fnDef = {
+        file,
+        rawName,
+        params,
+        isSecDef,
+        isTrigger,
+        searchPath,
+        body,
+        revokes,
+        grants
+      };
+
+      const entry = functionRegistry.get(normSig);
+      entry.history.push(fnDef);
+      entry.effective = fnDef; // chronologically latest definition wins
+    }
+  }
+
+  record(
+    'Total Function Declarations Inspected',
+    totalDeclarations >= 20,
+    `Audited ${totalDeclarations} historical function declarations across ${migrationFiles.length} migrations`
+  );
+
+  // Now audit the FINAL EFFECTIVE STATE of every unique function signature
+  for (const [sig, data] of functionRegistry.entries()) {
+    const eff = data.effective;
+
+    // 1. All final functions in public schema must be SECURITY DEFINER
+    record(
+      `Final Function Mode [${eff.file}]: ${data.exactSignature}`,
+      eff.isSecDef,
+      eff.isSecDef ? 'SECURITY DEFINER verified' : 'SECURITY INVOKER (Unexpected)'
+    );
+
+    // 2. Final effective search_path must be empty string ''
+    const hasSafeSearchPath = eff.searchPath === '';
+    record(
+      `Final search_path [${eff.file}]: ${data.exactSignature}`,
+      hasSafeSearchPath,
+      hasSafeSearchPath ? "SET search_path = '' verified" : `Insecure search path: '${eff.searchPath}'`
+    );
+
+    // 3. Schema qualification check on stripped body (no comments, no string literals)
+    const strippedBody = stripCommentsAndStrings(eff.body);
+    const unqualifiedRefs = [];
+
+    for (const tbl of appTables) {
+      // Check for unqualified table usage: FROM tbl, JOIN tbl, INTO tbl, UPDATE tbl, DELETE FROM tbl
+      const tblPattern = new RegExp(`\\b(from|join|into|update|delete\\s+from)\\s+${tbl}\\b(?!\\.)`, 'i');
+      if (tblPattern.test(strippedBody)) {
+        unqualifiedRefs.push(tbl);
+      }
+    }
+
+    record(
+      `Final Object Qualification [${eff.file}]: ${data.exactSignature}`,
+      unqualifiedRefs.length === 0,
+      unqualifiedRefs.length === 0 ? 'All application tables qualified' : `Unqualified tables: ${unqualifiedRefs.join(', ')}`
+    );
+
+    // 4. Sequence qualification if registration_seq is referenced
+    if (strippedBody.includes('registration_seq')) {
+      const hasQualifiedSeq = strippedBody.includes('public.registration_seq');
+      record(
+        `Final Sequence Qualification [${eff.file}]: ${data.exactSignature}`,
+        hasQualifiedSeq,
+        hasQualifiedSeq ? 'public.registration_seq qualified' : 'Unqualified registration_seq'
+      );
+    }
+
+    // 5. Final effective permissions check
+    if (eff.isTrigger) {
+      // Triggers must have EXECUTE revoked from client roles (PUBLIC, anon, authenticated)
+      const hasTriggerRevoke = eff.revokes.some(r => r.includes('public') && (r.includes('authenticated') || r.includes('anon')));
+      record(
+        `Final Trigger Permissions [${eff.file}]: ${data.exactSignature}`,
+        hasTriggerRevoke,
+        hasTriggerRevoke ? 'Direct client execution revoked from PUBLIC, anon, authenticated' : 'Missing client revoke on trigger'
+      );
+    } else if (data.baseName === 'get_public_events') {
+      // Safe public event listing allowed for anon
+      record(
+        `Final Permissions [${eff.file}]: ${data.exactSignature}`,
+        true,
+        'Public catalog query permitted for anon & authenticated'
+      );
+    } else {
+      // All other RPCs must NOT be granted to anon
+      const grantedToAnon = eff.grants.some(g => g.includes('anon'));
+      record(
+        `Final Permission Gate [${eff.file}]: ${data.exactSignature}`,
+        !grantedToAnon,
+        !grantedToAnon ? 'Anon execute safely absent' : 'CRITICAL: Granted execute to anon!'
+      );
+    }
+
+    // 6. Identity check verification inside helper functions
+    if (['is_admin', 'has_role', 'has_active_consent', 'is_profile_complete'].includes(data.baseName)) {
+      const checksUid = strippedBody.includes('auth.uid()');
+      const checksAdminOrSelf = strippedBody.includes('is_admin') || strippedBody.includes('admin_roles');
+      record(
+        `Final Helper Authorization [${eff.file}]: ${data.exactSignature}`,
+        checksUid && checksAdminOrSelf,
+        checksUid && checksAdminOrSelf ? 'auth.uid() and anti-enumeration verified' : 'Missing identity or enumeration guards'
+      );
+    }
+  }
+}
+
+const PROD_PROJECT_REF = 'lqlokvzvfccrarjmdvcv';
+
 async function verifyLiveSupabase() {
   if (!supabaseUrl || !serviceKey) {
     record(
@@ -136,6 +359,17 @@ async function verifyLiveSupabase() {
       'Skipped remote execution (SUPABASE_SERVICE_ROLE_KEY not configured in env)'
     );
     return;
+  }
+
+  // Safety Guard: Block execution if production project is supplied
+  if (supabaseUrl.toLowerCase().includes(PROD_PROJECT_REF.toLowerCase())) {
+    record(
+      'Live Supabase Safety Gate',
+      false,
+      'CRITICAL SECURITY VIOLATION: Remote tests attempted against production project ref!'
+    );
+    process.stderr.write('\nCRITICAL SECURITY VIOLATION: Execution blocked!\nTarget URL matches production project reference. Remote live tests are blocked against production.\n');
+    process.exit(1);
   }
 
   process.stdout.write(`Testing live connection to Supabase at: ${supabaseUrl}\n`);
@@ -258,6 +492,7 @@ async function run() {
   process.stdout.write('\n=== Running Coders Club Backend Verification Script ===\n\n');
 
   await verifySchemaDefinitions();
+  await verifyDynamicMigrationsAndSecurityDefiner();
   await verifyLiveSupabase();
 
   process.stdout.write('\n--- Backend Verification Results ---\n');

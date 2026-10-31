@@ -7,7 +7,7 @@ import { Badge } from '../components/Badge';
 import { QrTicket } from '../components/QrTicket';
 import { fetchPublishedEvents, fetchEventBySlug, fetchEventById, registerStudentForEvent, fetchStudentRegistrations } from '../lib/api';
 import type { DbEvent, RegistrationResult, DbStudentRegistration } from '../lib/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isProfileComplete } from '../context/AuthContext';
 import { downloadIcsFile } from '../lib/calendar';
 import {
   addToOfflineQueue,
@@ -18,7 +18,7 @@ import {
 
 export const Register: React.FC = () => {
   const { slug, id } = useParams<{ slug?: string; id?: string }>();
-  const { user, profile, isEmailVerified, resendVerificationEmail } = useAuth();
+  const { user, profile, isEmailVerified, consentState, resendVerificationEmail } = useAuth();
   const location = useLocation();
 
   const [event, setEvent] = useState<DbEvent | null>(null);
@@ -148,9 +148,17 @@ export const Register: React.FC = () => {
     }
   };
 
+  const hasCompletedProfile = isProfileComplete(profile);
+  const hasActiveConsent = consentState === 'ACTIVE';
+
   const handleConfirmRegistration = async () => {
     if (!event || !user?.id) return;
     setServerError(null);
+
+    if (!hasCompletedProfile || !hasActiveConsent) {
+      setServerError('You must complete your student profile and accept the Privacy Notice before registering.');
+      return;
+    }
 
     if (isOffline) {
       addToOfflineQueue({
@@ -492,6 +500,21 @@ export const Register: React.FC = () => {
               </Alert>
             )}
 
+            {(!hasCompletedProfile || !hasActiveConsent) && (
+              <div className="p-4 bg-[var(--warning-surface)] border border-[var(--warning-border)] rounded-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
+                <div className="flex items-center gap-2 text-xs font-mono text-[var(--warning-text)]">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Your student profile and privacy consent must be completed before registering for events.</span>
+                </div>
+                <Link
+                  to={`/onboarding?returnUrl=${encodeURIComponent(location.pathname)}`}
+                  className="cc-btn cc-btn--primary min-h-[36px] px-4 text-xs font-mono font-bold shrink-0"
+                >
+                  Complete Onboarding
+                </Link>
+              </div>
+            )}
+
             <div className="p-6 bg-[var(--surface-1)] border border-[var(--border)] rounded-md shadow-1 flex flex-col gap-4">
               <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-strong)] dark:text-[var(--accent-on-dark)] font-semibold flex items-center gap-2">
                 <User className="w-4 h-4 text-[var(--accent)]" />
@@ -534,13 +557,15 @@ export const Register: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleConfirmRegistration}
-                  disabled={isSubmitting || isClosed || (!isEmailVerified && !isOffline)}
+                  disabled={isSubmitting || isClosed || (!isEmailVerified && !isOffline) || !hasCompletedProfile || !hasActiveConsent}
                   className={`cc-btn min-h-[48px] px-8 text-xs font-mono font-bold uppercase tracking-wider shrink-0 ${
                     isFull ? 'cc-btn--secondary' : 'cc-btn--primary'
                   }`}
                 >
                   {isSubmitting
                     ? 'Processing...'
+                    : !hasCompletedProfile || !hasActiveConsent
+                    ? 'Complete Onboarding to Register'
                     : !isEmailVerified && !isOffline
                     ? 'Verify Email to Register'
                     : isOffline

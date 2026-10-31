@@ -148,6 +148,7 @@ server.listen(4174, async () => {
     { name: 'SignIn', path: '/signin' },
     { name: 'ForgotPassword', path: '/forgot-password' },
     { name: 'ResetPassword', path: '/reset-password' },
+    { name: 'Onboarding', path: '/onboarding' },
     { name: 'Account', path: '/account' },
     { name: 'AdminLogin', path: '/admin/login' },
     { name: 'AdminDashboard', path: '/admin' },

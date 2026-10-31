@@ -11,7 +11,7 @@ export const SignUp: React.FC = () => {
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnUrl = searchParams.get('returnUrl') || '/events';
+  const returnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo') || '/events';
 
   const [formData, setFormData] = useState<SignUpFormData>({
     fullName: '',
@@ -110,6 +110,8 @@ export const SignUp: React.FC = () => {
     setIsSubmitting(false);
     if (!result.success) {
       setServerError(result.error || 'Google authentication failed.');
+    } else {
+      navigate(returnUrl, { replace: true });
     }
   };
 

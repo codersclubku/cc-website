@@ -33,6 +33,7 @@ const SignIn = lazy(() => import('./pages/SignIn').then((m) => ({ default: m.Sig
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const Account = lazy(() => import('./pages/Account').then((m) => ({ default: m.Account })));
+const Onboarding = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.Onboarding })));
 
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin').then((m) => ({ default: m.AdminLogin })));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })));
@@ -130,9 +131,19 @@ export const App: React.FC = () => {
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route
-                    path="/account"
+                    path="/onboarding"
                     element={
                       <ProtectedRoute>
+                        <ErrorBoundary title="Onboarding Error">
+                          <Onboarding />
+                        </ErrorBoundary>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/account"
+                    element={
+                      <ProtectedRoute requireStudentPortalAccess>
                         <ErrorBoundary title="Student Account Error">
                           <Account />
                         </ErrorBoundary>

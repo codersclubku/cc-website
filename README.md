@@ -155,17 +155,30 @@ SPA routing is handled via [`public/_redirects`](file:///c:/CC%20Website/public/
 /*    /index.html   200
 ```
 
-### 7.2 Vercel
-Configured via [`vercel.json`](file:///c:/CC%20Website/vercel.json) with SPA rewrites and security response headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`).
+### 7.2 Vercel Deployment
+The platform's canonical production deployment domain is:
+- **Canonical URL**: `https://codersclubku.vercel.app`
+- **Configuration**: Configured via [`vercel.json`](file:///c:/CC%20Website/vercel.json) with SPA fallback rewrites (`/* -> /index.html`) and HTTP security response headers (`Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`).
 
-### 7.3 Supabase Authentication URLs
-In **Supabase Dashboard** -> **Authentication** -> **URL Configuration**:
-- **Site URL**: `https://your-domain.com`
+### 7.3 Supabase Authentication URL Configuration
+In **Supabase Project Dashboard** -> **Authentication** -> **URL Configuration**:
+- **Site URL**: `https://codersclubku.vercel.app`
 - **Redirect URLs**:
-  - `https://your-domain.com/signin`
-  - `https://your-domain.com/account`
-  - `https://your-domain.com/admin/login`
+  - `https://codersclubku.vercel.app/signin`
+  - `https://codersclubku.vercel.app/account`
+  - `https://codersclubku.vercel.app/reset-password`
+  - `https://codersclubku.vercel.app/admin/login`
   - `http://localhost:5173/**` (for local development)
+
+### 7.4 Google OAuth Provider Configuration
+In the **Google Cloud Console** -> **APIs & Services** -> **Credentials** -> **OAuth 2.0 Client IDs**:
+- **Authorized JavaScript origins**:
+  - `https://codersclubku.vercel.app`
+  - `http://localhost:5173`
+- **Authorized redirect URIs**:
+  - `https://<your-project-id>.supabase.co/auth/v1/callback`
+
+> **Critical Note on Callbacks**: Google OAuth redirects to Supabase's authoritative OAuth callback endpoint (`/auth/v1/callback`), *not* directly to the frontend Vercel URL. Supabase validates the authorization code, issues secure JWT session cookies, and subsequently redirects the client browser to the configured `Redirect URL` (e.g. `/account` or `/signin`).
 
 ---
 

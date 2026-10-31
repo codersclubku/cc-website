@@ -11,7 +11,7 @@ export const SignIn: React.FC = () => {
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnUrl = searchParams.get('returnUrl') || '/events';
+  const returnUrl = searchParams.get('returnUrl') || searchParams.get('returnTo') || '/events';
 
   const [formData, setFormData] = useState<SignInFormData>({
     email: '',
@@ -112,6 +112,8 @@ export const SignIn: React.FC = () => {
     setIsSubmitting(false);
     if (!result.success) {
       setAuthError(result.error || 'Google authentication failed.');
+    } else {
+      navigate(returnUrl, { replace: true });
     }
   };
 

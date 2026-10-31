@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint src scripts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:rpc": "node scripts/verify-rpc-consistency.mjs",
+    "test:auth": "node scripts/verify-onboarding-and-auth.mjs",
+    "test:all": "node scripts/verify-onboarding-and-auth.mjs && node scripts/verify-rpc-consistency.mjs && node scripts/verify-excel.mjs && node scripts/verify-auth-export.mjs && node scripts/verify-backend.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

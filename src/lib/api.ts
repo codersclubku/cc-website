@@ -20,6 +20,7 @@ export interface DbEvent {
   registration_opens_at?: string | null;
   registration_deadline: string;
   capacity?: number | null;
+  allow_waitlist?: boolean;
   status: 'draft' | 'published' | 'closed';
   created_at: string;
   registrations_count?: number;
@@ -216,6 +217,25 @@ export function mapApiError(error: any): string {
   }
   return msg || 'An unexpected error occurred. Please try again.';
 }
+
+export class ApiError extends Error {
+  readonly code: string;
+  constructor(message: string, code: string = 'UNKNOWN') {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+  }
+}
+
+export type ProfileQueryResult =
+  | { status: 'FOUND'; profile: StudentProfile }
+  | { status: 'NOT_FOUND' }
+  | { status: 'ERROR'; error: string };
+
+export type ConsentStatusResult =
+  | { status: 'ACTIVE' }
+  | { status: 'MISSING' }
+  | { status: 'ERROR'; message: string };
 
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
@@ -602,7 +622,11 @@ export async function fetchEventById(id: string): Promise<DbEvent | null> {
   };
 }
 
-export async function fetchStudentProfile(userId: string): Promise<StudentProfile | null> {
+export async function fetchStudentProfile(
+  userId: string,
+  userEmail?: string,
+  emailVerified?: boolean
+): Promise<ProfileQueryResult> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('profiles')
@@ -610,20 +634,178 @@ export async function fetchStudentProfile(userId: string): Promise<StudentProfil
       .eq('id', userId)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      return { status: 'ERROR', error: mapApiError(error) };
+    }
 
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData?.user;
+    if (!data) {
+      return { status: 'NOT_FOUND' };
+    }
 
     return {
-      ...data,
-      email: user?.email,
-      email_verified: Boolean(user?.email_confirmed_at)
-    } as StudentProfile;
+      status: 'FOUND',
+      profile: {
+        ...data,
+        email: userEmail,
+        email_verified: emailVerified
+      } as StudentProfile
+    };
   }
 
   const found = mockProfiles.find((p) => p.id === userId);
-  return found || null;
+  if (found) {
+    return {
+      status: 'FOUND',
+      profile: {
+        ...found,
+        email: userEmail || found.email,
+        email_verified: emailVerified ?? found.email_verified
+      }
+    };
+  }
+
+  try {
+    const sessionRaw = localStorage.getItem('cc-mock-auth-session');
+    if (sessionRaw) {
+      const parsed = JSON.parse(sessionRaw);
+      if (parsed?.profile && parsed.profile.id === userId) {
+        return { status: 'FOUND', profile: parsed.profile };
+      }
+    }
+  } catch {}
+
+  return { status: 'NOT_FOUND' };
+}
+
+export async function checkConsentStatus(
+  studentId: string,
+  version: string = 'v1.0-2026'
+): Promise<ConsentStatusResult> {
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('consents')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('notice_version', version)
+      .is('withdrawn_at', null)
+      .is('superseded_at', null)
+      .maybeSingle();
+
+    if (error) {
+      return { status: 'ERROR', message: mapApiError(error) };
+    }
+
+    return data ? { status: 'ACTIVE' } : { status: 'MISSING' };
+  }
+
+  try {
+    const raw = localStorage.getItem('cc-mock-consents');
+    if (!raw) return { status: 'MISSING' };
+    const consents = JSON.parse(raw);
+    const entry = consents[studentId];
+    if (entry && !entry.withdrawn_at && entry.version === version) {
+      return { status: 'ACTIVE' };
+    }
+    return { status: 'MISSING' };
+  } catch (err: any) {
+    return { status: 'ERROR', message: 'Failed to read local storage consent record: ' + err.message };
+  }
+}
+
+export async function completeStudentOnboardingApi(data: {
+  fullName: string;
+  usn: string;
+  department: string;
+  year: string;
+  semester: string;
+  consentAccepted: boolean;
+  version?: string;
+}): Promise<StudentProfile> {
+  if (isSupabaseConfigured && supabase) {
+    const { data: result, error } = await supabase.rpc('complete_student_onboarding', {
+      p_full_name:    data.fullName,
+      p_usn:          data.usn,
+      p_department:   data.department,
+      p_year:         data.year,
+      p_semester:     data.semester,
+      p_consent:      data.consentAccepted,
+      p_version:      data.version || 'v1.0-2026'
+    });
+
+    if (error) {
+      throw new ApiError(mapApiError(error), error.code || 'UNKNOWN');
+    }
+
+    return result as StudentProfile;
+  }
+
+  // Two-Phase Atomic Mock Persistence
+  if (!data.consentAccepted) {
+    throw new ApiError('Explicit privacy notice acceptance is required to register a student profile.', 'CONSENT_REQUIRED');
+  }
+
+  let currentUid = 'mock-student-1';
+  try {
+    const sessionRaw = localStorage.getItem('cc-mock-auth-session');
+    if (sessionRaw) {
+      const parsed = JSON.parse(sessionRaw);
+      if (parsed?.user?.id) currentUid = parsed.user.id;
+    }
+  } catch {}
+
+  const existingIdx = mockProfiles.findIndex((p) => p.id === currentUid);
+  const stagedProfile: StudentProfile = {
+    id: currentUid,
+    full_name: data.fullName.trim(),
+    usn: data.usn.toUpperCase().trim(),
+    department: data.department,
+    year: data.year,
+    semester: data.semester,
+    created_at: existingIdx >= 0 ? mockProfiles[existingIdx].created_at : new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    email: existingIdx >= 0 ? mockProfiles[existingIdx].email : 'student@kishkindauniversity.edu.in',
+    email_verified: true
+  };
+
+  // Phase 1: Test JSON and prepare localStorage payload
+  let stagedConsents: Record<string, any> = {};
+  try {
+    const rawConsents = localStorage.getItem('cc-mock-consents');
+    if (rawConsents) stagedConsents = JSON.parse(rawConsents);
+  } catch (parseErr: any) {
+    throw new ApiError('Corrupted local storage mock consent data: ' + parseErr.message, 'STORAGE_PARSE_ERROR');
+  }
+
+  stagedConsents[currentUid] = {
+    version: data.version || 'v1.0-2026',
+    accepted_at: new Date().toISOString(),
+    withdrawn_at: null
+  };
+
+  // Phase 2: Atomic Storage Write before memory mutation
+  try {
+    localStorage.setItem('cc-mock-consents', JSON.stringify(stagedConsents));
+    const sessionRaw = localStorage.getItem('cc-mock-auth-session');
+    if (sessionRaw) {
+      const sessionParsed = JSON.parse(sessionRaw);
+      sessionParsed.profile = stagedProfile;
+      localStorage.setItem('cc-mock-auth-session', JSON.stringify(sessionParsed));
+    }
+  } catch (storageErr: any) {
+    throw new ApiError(
+      'Storage quota exceeded or storage unavailable: ' + storageErr.message,
+      'STORAGE_ERROR'
+    );
+  }
+
+  // Memory mutation committed only after storage succeeds
+  if (existingIdx >= 0) {
+    mockProfiles[existingIdx] = stagedProfile;
+  } else {
+    mockProfiles.push(stagedProfile);
+  }
+
+  return stagedProfile;
 }
 
 export async function upsertStudentProfile(profileData: Partial<StudentProfile> & { id: string }): Promise<StudentProfile | null> {
@@ -647,7 +829,7 @@ export async function upsertStudentProfile(profileData: Partial<StudentProfile> 
       .single();
 
     if (error) {
-      throw new Error(mapApiError(error));
+      throw new ApiError(mapApiError(error), error.code || 'UNKNOWN');
     }
     return data as StudentProfile;
   }
@@ -674,29 +856,71 @@ export async function upsertStudentProfile(profileData: Partial<StudentProfile> 
   return updated;
 }
 
-export async function recordConsent(studentId: string, version: string, purpose: string): Promise<boolean> {
+export async function recordConsent(
+  studentId: string,
+  version: string = 'v1.0-2026',
+  _purpose?: string
+): Promise<{ success: boolean; error?: string }> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from('consents').insert({
-      student_id: studentId,
-      notice_version: version,
-      purpose,
-      accepted_at: new Date().toISOString()
+    const { error } = await supabase.rpc('record_consent_idempotent', {
+      p_student_id: studentId,
+      p_version:    version
     });
-    return !error;
+
+    if (error) {
+      return { success: false, error: mapApiError(error) };
+    }
+    return { success: true };
   }
-  return true;
+
+  try {
+    const raw = localStorage.getItem('cc-mock-consents') || '{}';
+    const consents = JSON.parse(raw);
+    consents[studentId] = {
+      version,
+      accepted_at: new Date().toISOString(),
+      withdrawn_at: null
+    };
+    localStorage.setItem('cc-mock-consents', JSON.stringify(consents));
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: 'Storage error: ' + err.message };
+  }
 }
 
 export async function withdrawConsent(studentId: string): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase
+    const { data, error } = await supabase.rpc('withdraw_consent_atomic', {
+      p_version: 'v1.0-2026'
+    });
+
+    if (!error) {
+      return Boolean(data);
+    }
+
+    const { error: updateError } = await supabase
       .from('consents')
       .update({ withdrawn_at: new Date().toISOString() })
       .eq('student_id', studentId)
-      .is('withdrawn_at', null);
-    return !error;
+      .is('withdrawn_at', null)
+      .is('superseded_at', null);
+
+    return !updateError;
   }
-  return true;
+
+  try {
+    const raw = localStorage.getItem('cc-mock-consents');
+    if (raw) {
+      const consents = JSON.parse(raw);
+      if (consents[studentId]) {
+        consents[studentId].withdrawn_at = new Date().toISOString();
+        localStorage.setItem('cc-mock-consents', JSON.stringify(consents));
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function registerStudentForEvent(eventId: string, studentId: string): Promise<RegistrationResult> {
@@ -714,6 +938,35 @@ export async function registerStudentForEvent(eventId: string, studentId: string
       };
     }
     return data as RegistrationResult;
+  }
+
+  // Mock Mode: Authoritatively verify profile completeness and privacy consent
+  const profile = mockProfiles.find((p) => p.id === studentId);
+  if (!profile || !profile.full_name?.trim() || !profile.usn?.trim() || !profile.department?.trim() || !profile.year?.trim() || !profile.semester?.trim()) {
+    return {
+      success: false,
+      code: 'PROFILE_INCOMPLETE',
+      message: 'You must complete your student profile before registering for events.'
+    };
+  }
+
+  const rawConsents = localStorage.getItem('cc-mock-consents');
+  let consentActive = false;
+  if (rawConsents) {
+    try {
+      const parsed = JSON.parse(rawConsents);
+      const userConsent = parsed[studentId];
+      if (userConsent && !userConsent.withdrawn_at) {
+        consentActive = true;
+      }
+    } catch {}
+  }
+  if (!consentActive) {
+    return {
+      success: false,
+      code: 'CONSENT_REQUIRED',
+      message: 'You must accept the Privacy Notice before registering for events.'
+    };
   }
 
   const event = mockEvents.find((e) => e.id === eventId);
@@ -750,13 +1003,20 @@ export async function registerStudentForEvent(eventId: string, studentId: string
     if (existing.status === 'cancelled') {
       const activeCount = mockStudentRegistrations.filter((r) => r.event_id === eventId && r.status === 'registered').length;
       if (event.capacity && activeCount >= event.capacity) {
-        existing.status = 'waitlisted';
+        if (event.allow_waitlist === true) {
+          existing.status = 'waitlisted';
+          return {
+            success: true,
+            code: 'WAITLISTED',
+            status: 'waitlisted',
+            message: 'Event capacity is full. You have been placed on the waitlist.',
+            confirmation_id: existing.confirmation_id
+          };
+        }
         return {
-          success: true,
-          code: 'WAITLISTED',
-          status: 'waitlisted',
-          message: 'Event capacity is full. You have been placed on the waitlist.',
-          confirmation_id: existing.confirmation_id
+          success: false,
+          code: 'CAPACITY_REACHED',
+          message: 'This event has reached full capacity.'
         };
       }
       existing.status = 'registered';
@@ -773,12 +1033,22 @@ export async function registerStudentForEvent(eventId: string, studentId: string
 
   const activeCount = mockStudentRegistrations.filter((r) => r.event_id === eventId && r.status === 'registered').length;
   const isFull = event.capacity ? activeCount >= event.capacity : false;
+
+  if (isFull) {
+    if (event.allow_waitlist !== true) {
+      return {
+        success: false,
+        code: 'CAPACITY_REACHED',
+        message: 'This event has reached full capacity.'
+      };
+    }
+  }
+
   const status: 'registered' | 'waitlisted' = isFull ? 'waitlisted' : 'registered';
 
   mockSeq += 1;
   const yearStr = new Date().getFullYear();
   const confId = `CC-${yearStr}-${String(mockSeq).padStart(4, '0')}`;
-  const profile = mockProfiles.find((p) => p.id === studentId);
 
   const newReg: DbStudentRegistration = {
     id: `reg-${Date.now()}`,
@@ -1250,6 +1520,7 @@ export async function adminSaveEvent(eventData: Partial<DbEvent>): Promise<{ suc
       registration_opens_at: eventData.registration_opens_at || null,
       registration_deadline: eventData.registration_deadline,
       capacity: eventData.capacity ? Number(eventData.capacity) : null,
+      allow_waitlist: Boolean(eventData.allow_waitlist),
       status: eventData.status || 'draft'
     };
 
@@ -1300,6 +1571,7 @@ export async function adminSaveEvent(eventData: Partial<DbEvent>): Promise<{ suc
     registration_opens_at: eventData.registration_opens_at || new Date().toISOString(),
     registration_deadline: eventData.registration_deadline || new Date().toISOString(),
     capacity: eventData.capacity || null,
+    allow_waitlist: Boolean(eventData.allow_waitlist),
     status: eventData.status || 'draft',
     created_at: new Date().toISOString()
   };
@@ -1828,7 +2100,7 @@ export async function adminSaveTeamMember(
       return { success: false, message: 'Unauthorized: Admin authentication required' };
     }
 
-    const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: user.id });
+    const { data: adminCheck } = await supabase.rpc('is_admin', { check_user_id: user.id });
     if (!adminCheck) {
       return { success: false, message: 'Forbidden: Insufficient privileges' };
     }
@@ -1946,7 +2218,7 @@ export async function adminDeleteTeamMember(id: string): Promise<boolean> {
       return false;
     }
 
-    const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: user.id });
+    const { data: adminCheck } = await supabase.rpc('is_admin', { check_user_id: user.id });
     if (!adminCheck) {
       return false;
     }

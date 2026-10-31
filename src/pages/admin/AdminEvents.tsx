@@ -49,6 +49,7 @@ export const AdminEvents: React.FC = () => {
       ends_at: dayAfter,
       registration_deadline: tomorrow,
       capacity: 60,
+      allow_waitlist: false,
       status: 'draft',
       agenda: [],
       prerequisites: [],
@@ -59,6 +60,7 @@ export const AdminEvents: React.FC = () => {
   const handleOpenEdit = (ev: DbEvent) => {
     setEditingEvent({
       ...ev,
+      allow_waitlist: ev.allow_waitlist ?? false,
       starts_at: ev.starts_at ? new Date(ev.starts_at).toISOString().slice(0, 16) : '',
       ends_at: ev.ends_at ? new Date(ev.ends_at).toISOString().slice(0, 16) : '',
       registration_deadline: ev.registration_deadline ? new Date(ev.registration_deadline).toISOString().slice(0, 16) : '',
@@ -189,8 +191,15 @@ export const AdminEvents: React.FC = () => {
                       })}
                     </td>
                     <td className="p-3 text-right font-bold text-[var(--text-strong)] dark:text-[var(--accent-on-dark)]">
-                      {ev.registrations_count || 0}
-                      {ev.capacity ? ` / ${ev.capacity}` : ''}
+                      <div>
+                        {ev.registrations_count || 0}
+                        {ev.capacity ? ` / ${ev.capacity}` : ''}
+                      </div>
+                      {ev.allow_waitlist && (
+                        <span className="text-[10px] font-mono text-[var(--accent)] block font-normal">
+                          Waitlist enabled
+                        </span>
+                      )}
                     </td>
                     <td className="p-3 text-right">
                       <div className="inline-flex items-center gap-2">
@@ -345,6 +354,18 @@ export const AdminEvents: React.FC = () => {
                     className="cc-input"
                     placeholder="Leave empty for unlimited"
                   />
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <input
+                      type="checkbox"
+                      id="event-allow-waitlist"
+                      checked={editingEvent.allow_waitlist || false}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, allow_waitlist: e.target.checked })}
+                      className="w-4 h-4 rounded border-[var(--border)] text-[var(--accent)]"
+                    />
+                    <label htmlFor="event-allow-waitlist" className="text-xs font-mono text-[var(--text-muted)] cursor-pointer select-none">
+                      Enable waitlist queue when full (default: off)
+                    </label>
+                  </div>
                 </div>
               </div>
 

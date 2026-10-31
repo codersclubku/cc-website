@@ -1,13 +1,37 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { checkIsAdmin, fetchStudentProfile, upsertStudentProfile, recordConsent, withdrawConsent, deleteStudentAccount } from '../lib/api';
-import type { StudentProfile } from '../lib/api';
+import {
+  checkIsAdmin,
+  fetchStudentProfile,
+  upsertStudentProfile,
+  completeStudentOnboardingApi,
+  recordConsent,
+  checkConsentStatus,
+  withdrawConsent,
+  deleteStudentAccount
+} from '../lib/api';
+import type { StudentProfile, ProfileQueryResult, ConsentStatusResult } from '../lib/api';
 import type { SignUpFormData } from '../lib/validation';
 
 export interface AuthUser {
   id: string;
   email?: string;
   email_confirmed_at?: string | null;
+  user_metadata?: Record<string, any>;
+}
+
+export type ConsentState = 'ACTIVE' | 'MISSING' | 'ERROR' | 'LOADING';
+
+export function isProfileComplete(profile: StudentProfile | null): boolean {
+  if (!profile) return false;
+  return Boolean(
+    profile.id &&
+    profile.full_name?.trim() &&
+    profile.usn?.trim() &&
+    profile.department?.trim() &&
+    profile.year?.trim() &&
+    profile.semester?.trim()
+  );
 }
 
 export interface AuthContextType {
@@ -17,6 +41,18 @@ export interface AuthContextType {
   loading: boolean;
   isLoading: boolean;
   isEmailVerified: boolean;
+  isProfileComplete: boolean;
+  profileLoadError: string | null;
+  consentState: ConsentState;
+  acceptConsent: () => Promise<{ success: boolean; error?: string }>;
+  completeOnboarding: (data: {
+    fullName: string;
+    usn: string;
+    department: string;
+    year: string;
+    semester: string;
+    consentAccepted: boolean;
+  }) => Promise<{ success: boolean; error?: string }>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (data: SignUpFormData) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
@@ -40,69 +76,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
+  const [consentState, setConsentState] = useState<ConsentState>('LOADING');
 
-  const isEmailVerified = Boolean(user?.email_confirmed_at);
+  const authOpRef = useRef(0);
+  const activeUserIdRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
 
-  const loadProfileAndAdmin = async (userId: string, email?: string) => {
-    try {
-      const [adminStatus, userProfile] = await Promise.all([
-        checkIsAdmin(userId),
-        fetchStudentProfile(userId)
-      ]);
-      setIsAdmin(adminStatus);
-      if (userProfile) {
-        setProfile({ ...userProfile, email: email || userProfile.email });
-      } else {
-        setProfile(null);
-      }
-    } catch {
-      setIsAdmin(false);
-      setProfile(null);
-    }
-  };
-
+  // ---------------------------------------------------------------------------
+  // 1. Synchronous GoTrue Auth State Listener (Strictly synchronous callbacks)
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
-    async function initAuth() {
-      if (isSupabaseConfigured && supabase) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user && mounted) {
-            const authUser: AuthUser = {
-              id: session.user.id,
-              email: session.user.email,
-              email_confirmed_at: session.user.email_confirmed_at
-            };
-            setUser(authUser);
-            await loadProfileAndAdmin(authUser.id, authUser.email);
-          }
-        } catch {
-        } finally {
-          if (mounted) setLoading(false);
-        }
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-          if (session?.user && mounted) {
-            const authUser: AuthUser = {
-              id: session.user.id,
-              email: session.user.email,
-              email_confirmed_at: session.user.email_confirmed_at
-            };
-            setUser(authUser);
-            await loadProfileAndAdmin(authUser.id, authUser.email);
-          } else if (mounted) {
-            setUser(null);
-            setProfile(null);
-            setIsAdmin(false);
-          }
-          if (mounted) setLoading(false);
-        });
-
-        return () => {
-          subscription.unsubscribe();
-        };
-      } else if (import.meta.env.DEV) {
+    if (!isSupabaseConfigured || !supabase) {
+      if (import.meta.env.DEV) {
         const mockAuth = localStorage.getItem('cc-mock-auth-session');
         if (mockAuth) {
           try {
@@ -110,25 +98,222 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(parsed.user);
             setProfile(parsed.profile);
             setIsAdmin(Boolean(parsed.isAdmin));
-          } catch {
-          }
+            activeUserIdRef.current = parsed.user?.id || null;
+          } catch {}
         }
-        setLoading(false);
-      } else {
-        setLoading(false);
       }
+      setLoading(false);
+      return () => {
+        mountedRef.current = false;
+      };
     }
 
-    initAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mountedRef.current) return;
+
+      if (event === 'SIGNED_OUT' || !session?.user) {
+        authOpRef.current++;
+        activeUserIdRef.current = null;
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setProfileLoadError(null);
+        setConsentState('MISSING');
+        setLoading(false);
+      } else if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email,
+          email_confirmed_at: session.user.email_confirmed_at,
+          user_metadata: session.user.user_metadata
+        };
+        activeUserIdRef.current = authUser.id;
+        setUser(authUser);
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Silently update token credentials without resetting profile/loading state
+        if (session.user.id === activeUserIdRef.current) {
+          setUser((prev) =>
+            prev ? { ...prev, email_confirmed_at: session.user.email_confirmed_at, user_metadata: session.user.user_metadata } : null
+          );
+        }
+      } else if (event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+        if (session.user.id === activeUserIdRef.current) {
+          setUser((prev) =>
+            prev ? { ...prev, email_confirmed_at: session.user.email_confirmed_at, user_metadata: session.user.user_metadata } : null
+          );
+        }
+      }
+    });
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+      subscription.unsubscribe();
     };
   }, []);
 
-  const refreshProfile = async () => {
+  // ---------------------------------------------------------------------------
+  // 2. Decoupled Asynchronous Database Loader (Runs when user.id changes)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setIsAdmin(false);
+      setProfileLoadError(null);
+      setConsentState('MISSING');
+      setLoading(false);
+      return;
+    }
+
+    const currentUserId = user.id;
+    const currentOp = ++authOpRef.current;
+    let isCancelled = false;
+
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [adminStatus, profResult, consentResult]: [boolean, ProfileQueryResult, ConsentStatusResult] = await Promise.all([
+          checkIsAdmin(currentUserId),
+          fetchStudentProfile(currentUserId, user?.email, Boolean(user?.email_confirmed_at)),
+          checkConsentStatus(currentUserId, 'v1.0-2026')
+        ]);
+
+        if (isCancelled || !mountedRef.current || authOpRef.current !== currentOp || activeUserIdRef.current !== currentUserId) {
+          return;
+        }
+
+        setIsAdmin(adminStatus);
+
+        if (profResult.status === 'FOUND') {
+          if (profResult.profile.id !== currentUserId) {
+            throw new Error('Security assertion failed: profile identity mismatch');
+          }
+          setProfile(profResult.profile);
+          setProfileLoadError(null);
+        } else if (profResult.status === 'NOT_FOUND') {
+          setProfile(null);
+          setProfileLoadError(null);
+        } else {
+          setProfile(null);
+          setProfileLoadError(profResult.error);
+        }
+
+        if (consentResult.status === 'ACTIVE') {
+          setConsentState('ACTIVE');
+        } else if (consentResult.status === 'MISSING') {
+          setConsentState('MISSING');
+        } else {
+          setConsentState('ERROR');
+        }
+      } catch (err: any) {
+        if (!isCancelled && mountedRef.current && authOpRef.current === currentOp) {
+          setProfile(null);
+          setProfileLoadError(err?.message || 'Failed to authenticate student profile');
+          setConsentState('ERROR');
+        }
+      } finally {
+        if (!isCancelled && mountedRef.current && authOpRef.current === currentOp) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user?.id]);
+
+  // ---------------------------------------------------------------------------
+  // 3. User Actions (Guarded against stale async states and session invalidation)
+  // ---------------------------------------------------------------------------
+
+  const completeOnboarding = async (data: {
+    fullName: string;
+    usn: string;
+    department: string;
+    year: string;
+    semester: string;
+    consentAccepted: boolean;
+  }): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'You must be signed in to complete onboarding.' };
+    if (!data.consentAccepted) return { success: false, error: 'Explicit privacy notice acceptance is required.' };
+
+    const submissionUid = user.id;
+    const currentOp = ++authOpRef.current;
+
+    try {
+      const savedProfile = await completeStudentOnboardingApi({
+        fullName:        data.fullName.trim(),
+        usn:             data.usn.toUpperCase().trim(),
+        department:      data.department,
+        year:            data.year,
+        semester:        data.semester,
+        consentAccepted: data.consentAccepted,
+        version:         'v1.0-2026'
+      });
+
+      if (savedProfile.id !== submissionUid) {
+        throw new Error('Security assertion failed: returned profile ID mismatch');
+      }
+
+      if (mountedRef.current && authOpRef.current === currentOp && activeUserIdRef.current === submissionUid) {
+        setProfile({
+          ...savedProfile,
+          email: user.email,
+          email_verified: Boolean(user.email_confirmed_at)
+        });
+        setConsentState('ACTIVE');
+        setProfileLoadError(null);
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      const isDuplicate = err?.code === '23505' || err?.message?.includes('already registered') || err?.message?.includes('already exists');
+      return {
+        success: false,
+        error: isDuplicate
+          ? 'This USN is already registered to another account. Please contact the club coordinator at codersclub.ku@gmail.com.'
+          : err?.message || 'Failed to complete registration. Please try again.'
+      };
+    }
+  };
+
+  const acceptConsent = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'User is not signed in.' };
+    const res = await recordConsent(user.id, 'v1.0-2026');
+    if (res.success) {
+      setConsentState('ACTIVE');
+      return { success: true };
+    }
+    return { success: false, error: res.error || 'Failed to record consent.' };
+  };
+
+  const refreshProfile = async (): Promise<void> => {
     if (!user) return;
-    await loadProfileAndAdmin(user.id, user.email);
+    const currentOp = ++authOpRef.current;
+    const currentUid = user.id;
+
+    try {
+      const [adminStatus, profResult, consentResult] = await Promise.all([
+        checkIsAdmin(currentUid),
+        fetchStudentProfile(currentUid, user.email, Boolean(user.email_confirmed_at)),
+        checkConsentStatus(currentUid, 'v1.0-2026')
+      ]);
+
+      if (!mountedRef.current || authOpRef.current !== currentOp || activeUserIdRef.current !== currentUid) {
+        return;
+      }
+
+      setIsAdmin(adminStatus);
+      if (profResult.status === 'FOUND') {
+        setProfile(profResult.profile);
+        setProfileLoadError(null);
+      } else if (profResult.status === 'ERROR') {
+        setProfileLoadError(profResult.error);
+      }
+      setConsentState(consentResult.status);
+    } catch {}
   };
 
   const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -148,10 +333,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const authUser: AuthUser = {
           id: data.user.id,
           email: data.user.email,
-          email_confirmed_at: data.user.email_confirmed_at
+          email_confirmed_at: data.user.email_confirmed_at,
+          user_metadata: data.user.user_metadata
         };
+        activeUserIdRef.current = authUser.id;
         setUser(authUser);
-        await loadProfileAndAdmin(authUser.id, authUser.email);
         return { success: true };
       } catch {
         return { success: false, error: GENERIC_AUTH_ERROR };
@@ -162,15 +348,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: GENERIC_AUTH_ERROR };
     }
 
+    // Mock Mode Administrator
     if (cleanEmail === 'admin@codersclub.ku' && password === 'admin123') {
       const mockUser: AuthUser = { id: 'mock-admin-user', email: cleanEmail, email_confirmed_at: new Date().toISOString() };
+      activeUserIdRef.current = mockUser.id;
       setUser(mockUser);
       setIsAdmin(true);
       setProfile(null);
+      setConsentState('ACTIVE');
       localStorage.setItem('cc-mock-auth-session', JSON.stringify({ user: mockUser, profile: null, isAdmin: true }));
       return { success: true };
     }
 
+    // Mock Mode Student
     if (password.length >= 8) {
       const mockUser: AuthUser = {
         id: 'mock-student-1',
@@ -189,10 +379,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: cleanEmail,
         email_verified: true
       };
+      activeUserIdRef.current = mockUser.id;
       setUser(mockUser);
       setProfile(mockProfile);
       setIsAdmin(false);
+      setConsentState('ACTIVE');
+
       localStorage.setItem('cc-mock-auth-session', JSON.stringify({ user: mockUser, profile: mockProfile, isAdmin: false }));
+      const consents = JSON.parse(localStorage.getItem('cc-mock-consents') || '{}');
+      consents[mockUser.id] = { version: 'v1.0-2026', accepted_at: new Date().toISOString(), withdrawn_at: null };
+      localStorage.setItem('cc-mock-consents', JSON.stringify(consents));
+
       return { success: true };
     }
 
@@ -218,7 +415,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           options: {
             data: {
               full_name: data.fullName,
-              usn: data.usn.toUpperCase().trim()
+              usn: data.usn.toUpperCase().trim(),
+              department: data.department,
+              year: data.year,
+              semester: data.semester
             }
           }
         });
@@ -232,30 +432,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const userId = authData.user.id;
 
-        await upsertStudentProfile({
-          id: userId,
-          full_name: data.fullName,
-          usn: data.usn.toUpperCase().trim(),
-          department: data.department,
-          year: data.year,
-          semester: data.semester,
-          email: cleanEmail,
-          email_verified: Boolean(authData.user.email_confirmed_at)
-        });
+        // Attempt initial profile & consent upsert if session is active
+        try {
+          if (authData.session) {
+            await upsertStudentProfile({
+              id: userId,
+              full_name: data.fullName,
+              usn: data.usn.toUpperCase().trim(),
+              department: data.department,
+              year: data.year,
+              semester: data.semester,
+              email: cleanEmail,
+              email_verified: Boolean(authData.user.email_confirmed_at)
+            });
 
-        await recordConsent(
-          userId,
-          'v1.0-2026',
-          'Student event registration, attendance verification, and club records under Kishkinda University policy.'
-        );
+            await recordConsent(
+              userId,
+              'v1.0-2026',
+              'Student event registration, attendance verification, and club records under Kishkinda University policy.'
+            );
+          }
+        } catch {
+          // If session was inactive (pending verification), the user will complete or load on first sign-in
+        }
 
         const authUser: AuthUser = {
           id: userId,
           email: cleanEmail,
           email_confirmed_at: authData.user.email_confirmed_at
         };
+        activeUserIdRef.current = authUser.id;
         setUser(authUser);
-        await loadProfileAndAdmin(userId, cleanEmail);
 
         return {
           success: true,
@@ -269,7 +476,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    const mockId = `mock-${Date.now()}`;
+    // Mock Mode Signup
+    const mockId = 'mock-student-1';
     const mockUser: AuthUser = { id: mockId, email: cleanEmail, email_confirmed_at: new Date().toISOString() };
     const newProfile: StudentProfile = {
       id: mockId,
@@ -284,10 +492,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email_verified: true
     };
 
+    activeUserIdRef.current = mockId;
     setUser(mockUser);
     setProfile(newProfile);
     setIsAdmin(false);
+    setConsentState('ACTIVE');
+
     localStorage.setItem('cc-mock-auth-session', JSON.stringify({ user: mockUser, profile: newProfile, isAdmin: false }));
+    const consents = JSON.parse(localStorage.getItem('cc-mock-consents') || '{}');
+    consents[mockId] = { version: 'v1.0-2026', accepted_at: new Date().toISOString(), withdrawn_at: null };
+    localStorage.setItem('cc-mock-consents', JSON.stringify(consents));
 
     return { success: true, requiresVerification: false };
   };
@@ -298,7 +512,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/account',
+          redirectTo: `${window.location.origin}/account`,
           queryParams: allowedDomain ? { hd: allowedDomain } : undefined
         }
       });
@@ -309,14 +523,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    authOpRef.current++;
+    activeUserIdRef.current = null;
+    setUser(null);
+    setProfile(null);
+    setIsAdmin(false);
+    setConsentState('MISSING');
+    setProfileLoadError(null);
+
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();
     }
     localStorage.removeItem('cc-mock-auth-session');
     localStorage.removeItem('cc-mock-admin-auth');
-    setUser(null);
-    setProfile(null);
-    setIsAdmin(false);
   };
 
   const resendVerificationEmail = async (): Promise<{ success: boolean; error?: string }> => {
@@ -339,10 +558,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.auth.resetPasswordForEmail(cleanEmail, {
-          redirectTo: window.location.origin + '/reset-password'
+          redirectTo: `${window.location.origin}/reset-password`
         });
-      } catch {
-      }
+      } catch {}
     }
     return { success: true, message: GENERIC_RESET_CONFIRMATION };
   };
@@ -372,7 +590,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const withdrawNoticeConsent = async (): Promise<boolean> => {
     if (!user) return false;
-    return withdrawConsent(user.id);
+    const success = await withdrawConsent(user.id);
+    if (success) {
+      setConsentState('MISSING');
+    }
+    return success;
   };
 
   const deleteAccount = async (): Promise<{ success: boolean; error?: string }> => {
@@ -397,7 +619,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin,
         loading,
         isLoading: loading,
-        isEmailVerified,
+        isEmailVerified: Boolean(user?.email_confirmed_at),
+        isProfileComplete: isProfileComplete(profile),
+        profileLoadError,
+        consentState,
+        acceptConsent,
+        completeOnboarding,
         signIn,
         signUp,
         signInWithGoogle,
