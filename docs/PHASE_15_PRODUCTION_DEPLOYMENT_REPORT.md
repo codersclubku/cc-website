@@ -92,11 +92,11 @@ Phase 15 executed the controlled production deployment of the Kishkinda Universi
 
 ## 3. Smoke Testing & Verification Guide
 
-| Flow | URL | Test Action | Expected Outcome |
-| :--- | :--- | :--- | :--- |
-| **Student Onboarding** | `https://codersclubku.vercel.app/onboarding` | Submit student profile with USN `KUB24CSE198`, CSE Dept, Year, Semester, and Privacy Agreement | Onboarding succeeds immediately; redirects to `/account` with full profile data |
-| **Administrator Login** | `https://codersclubku.vercel.app/admin/login` | Sign in with `vittala.t1@gmail.com` | Redirects to `/admin`; unlocks Dashboard, Event Management, Check-In, Registrations, and Student Directory |
-| **Public Site** | `https://codersclubku.vercel.app/` | Browse Home, Events, Team, Gallery, About, Contact | Fast rendering, responsive layout, dark purple cyber-themed aesthetic |
+| Flow | URL | Test Action | Expected Outcome | Production Test Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Student Google Sign-In & Onboarding** | `https://codersclubku.vercel.app/signin` & `/onboarding` | Sign in via Google with `vittuvlogs25@gmail.com`, submit profile (`KUB24CSE198`, CSE, 3rd Year, 5th Sem) | Onboarding succeeds smoothly; redirects to `/account` with full profile data | **VERIFIED & PASSED** (Oct 31, 2026) |
+| **Administrator Login** | `https://codersclubku.vercel.app/admin/login` | Sign in with `vittala.t1@gmail.com` | Redirects to `/admin`; unlocks Dashboard, Event Management, Check-In, Registrations, and Student Directory | **PROVISIONED & ACTIVE** |
+| **Public Site** | `https://codersclubku.vercel.app/` | Browse Home, Events, Team, Gallery, About, Contact | Fast rendering, responsive layout, dark purple cyber-themed aesthetic | **VERIFIED & LIVE** |
 
 ---
 
@@ -105,3 +105,4 @@ Phase 15 executed the controlled production deployment of the Kishkinda Universi
 - **Rule Enforcement**: In accordance with user directives, when updating code files, run `graphify update .` to keep the project knowledge graph current.
 - **Security Posture**: No secrets, service-role keys, or OAuth credentials are saved in repository code. RLS is enforced across all tables.
 - **Production Status**: **READY FOR OPEN CAMPUS USE**.
+
