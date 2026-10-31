@@ -6,9 +6,9 @@
     "semantic_hash": "029f4905006c1fffd96bc863e2d98d3e"
   },
   "package.json": {
-    "mtime": 1793462255.001392,
-    "seen": 1793462963.654314,
-    "ast_hash": "4b43dedf9e618f7cda68cf084b3813e7",
+    "mtime": 1793464989.7416275,
+    "seen": 1793465037.083951,
+    "ast_hash": "0532b3419eee7d62189c4ffbcf1057bf",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -114,9 +114,9 @@
     "semantic_hash": "77e9c031c749b2b1a7c0d1024278c99f"
   },
   "src/App.tsx": {
-    "mtime": 1793456326.6706827,
-    "seen": 1793456585.8176868,
-    "ast_hash": "66eb96a5fd3e78164f9230d8f4cd4998",
+    "mtime": 1793465007.620271,
+    "seen": 1793465037.087898,
+    "ast_hash": "16c7c5cb92b0d685ae99f6175c881d99",
     "semantic_hash": ""
   },
   "src/components/Accordion.tsx": {
@@ -426,8 +426,8 @@
     "semantic_hash": "0f893360badd875ed29143c1943418ec"
   },
   "src/pages/About.tsx": {
-    "mtime": 1793464478.4480028,
-    "seen": 1793464506.9046094,
+    "mtime": 1793464545.118116,
+    "seen": 1793465037.095849,
     "ast_hash": "e44a4acd060f23f5cc43fccfec40a6d6",
     "semantic_hash": ""
   },
@@ -456,10 +456,10 @@
     "semantic_hash": "bb0601569ec026884b9a41796a25c299"
   },
   "src/pages/ForgotPassword.tsx": {
-    "mtime": 1793201494.3838708,
-    "seen": 1793203479.1688805,
-    "ast_hash": "76aa7f94a9083cf1cd92b1692151c2c2",
-    "semantic_hash": "76aa7f94a9083cf1cd92b1692151c2c2"
+    "mtime": 1793465465.6684158,
+    "seen": 1793465532.0412455,
+    "ast_hash": "b31208a9baebd80f1738e4deeb36788c",
+    "semantic_hash": ""
   },
   "src/pages/Gallery.tsx": {
     "mtime": 1793203269.724285,
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "src/pages/SignUp.tsx": {
-    "mtime": 1793462044.2028174,
-    "seen": 1793462236.880942,
-    "ast_hash": "8388b1772fe492fd66b379069a2269c2",
+    "mtime": 1793465455.026012,
+    "seen": 1793465532.042448,
+    "ast_hash": "f62070a9f697117a020bb299b07587ff",
     "semantic_hash": ""
   },
   "src/pages/Team.tsx": {
@@ -1729,9 +1729,9 @@
     "semantic_hash": ""
   },
   "src/pages/Onboarding.tsx": {
-    "mtime": 1793456327.2593565,
-    "seen": 1793456585.8264673,
-    "ast_hash": "4b5cdae029cc10fdb6b9d668ceba4bf8",
+    "mtime": 1793465475.9397902,
+    "seen": 1793465532.0416448,
+    "ast_hash": "73e6862e6d2fd670a1b4b4b060f8b625",
     "semantic_hash": ""
   },
   "docs/qa/Onboarding.png": {
@@ -1807,9 +1807,9 @@
     "semantic_hash": ""
   },
   "src/pages/PrivacyPolicy.tsx": {
-    "mtime": 1793460588.7922633,
-    "seen": 1793460760.8845508,
-    "ast_hash": "662297357e37ca53bc15048430b6b2e4",
+    "mtime": 1793465486.1890223,
+    "seen": 1793465532.0417802,
+    "ast_hash": "7140878614c6f41d68ef173f864f1263",
     "semantic_hash": ""
   },
   "src/pages/Terms.tsx": {

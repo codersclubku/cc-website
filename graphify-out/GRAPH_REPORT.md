@@ -1,23 +1,23 @@
 # Graph Report - CC Website  (2026-10-31)
 
 ## Corpus Check
-- 170 files · ~656,469 words
+- 170 files · ~655,836 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: .css 3, .example 2, (none) 2)
 
 ## Summary
-- 1286 nodes · 2632 edges · 75 communities (67 shown, 8 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 49 edges (avg confidence: 0.93)
+- 1286 nodes · 2629 edges · 75 communities (68 shown, 7 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 48 edges (avg confidence: 0.93)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `36c9fb82`
+- Built from commit: `54725e45`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - 3. Comprehensive Migration Safety Review (11 Files)
-- useReducedMotion
+- App.tsx
 - Home.tsx
 - lucide-react
 - MemberDialog.tsx
@@ -74,16 +74,17 @@
 - Phase 16.1 — Security Claims Verification & Production Readiness Reconciliation Report
 - Projects.tsx
 - verify-supabase-staging.mjs
-- AdminLayout.tsx
-- PublicLayout
+- validation.ts
+- AdminRegistrations.tsx
 - Phase 16 — Comprehensive Codebase Audit & Quality Stabilization Report (Reconciled & Corrected)
 - 2. Key Audit Qualifications & Reconciliations
 - 1. Item-by-Item Verification & Correction Matrix
 - Legal Pages Implementation & Verification Report
-- ProtectedRoute
+- Alert
 - dependencies
 - feedbackVitePlugin.ts
 - SettingsMenu.tsx
+- CursorErrorBoundary
 - devDependencies
 - scripts
 - Gallery.tsx
@@ -115,23 +116,23 @@
 ## Import Cycles
 - None detected.
 
-## Communities (75 total, 8 thin omitted)
+## Communities (75 total, 7 thin omitted)
 
 ### Community 0 - "3. Comprehensive Migration Safety Review (11 Files)"
 Cohesion: 0.07
 Nodes (28): 1.1 Root Cause Analysis, 1.2 Remediated Read-Only Inspection Command, 1. Resolution of Phase 14 Inspection Failure, 2.1 Database Engine & Schemas, 2.2 Installed Extensions, 2.3 Public Tables & Views, 2.4 Existing Public Functions & Hardening Posture, 2.5 Row Counts & Pre-existing User Data (+20 more)
 
-### Community 1 - "useReducedMotion"
-Cohesion: 0.11
-Nodes (34): About, Account, AdminAnnouncements, AdminCheckIn, AdminDashboard, AdminEvents, AdminFeedback, AdminGallery (+26 more)
+### Community 1 - "App.tsx"
+Cohesion: 0.05
+Nodes (54): About, Account, AdminAnnouncements, AdminCheckIn, AdminDashboard, AdminEvents, AdminFeedback, AdminGallery (+46 more)
 
 ### Community 2 - "Home.tsx"
 Cohesion: 0.12
 Nodes (30): FeedbackStatusBadge(), FeedbackTypeBadge(), StatusBadgeProps, TypeBadgeProps, FeedbackForm(), FeedbackFormProps, AUTHORIZED_FEEDBACK_ADMIN_EMAILS, captureClientMeta() (+22 more)
 
 ### Community 3 - "lucide-react"
-Cohesion: 0.06
-Nodes (76): D. Route Registration & Access Verification, 2.1 Security & Auth Findings, lucide-react, react-router-dom, Alert(), AlertProps, AlertType, Button (+68 more)
+Cohesion: 0.13
+Nodes (24): D. Route Registration & Access Verification, lucide-react, react-router-dom, Button, ButtonProps, HairlineGrid(), HairlineGridProps, KULogo() (+16 more)
 
 ### Community 4 - "MemberDialog.tsx"
 Cohesion: 0.10
@@ -230,8 +231,8 @@ Cohesion: 0.33
 Nodes (5): plugins, rules, react/only-export-components, react/rules-of-hooks, $schema
 
 ### Community 28 - "CursorProvider.tsx"
-Cohesion: 0.14
-Nodes (15): Cursor(), Particle, CursorProvider(), DISABLED_EXACT_ROUTES, isRouteAllowed(), MagneticManager(), CursorErrorBoundary, Props (+7 more)
+Cohesion: 0.26
+Nodes (13): Cursor(), Particle, CursorProvider(), DISABLED_EXACT_ROUTES, isRouteAllowed(), MagneticManager(), PointerState, subscribePointer() (+5 more)
 
 ### Community 29 - "verify-feedback-ui.mjs"
 Cohesion: 0.40
@@ -294,8 +295,8 @@ Cohesion: 0.32
 Nodes (6): __dirname, __filename, record(), results, run(), sanitizeExcelValue()
 
 ### Community 50 - "react"
-Cohesion: 0.17
-Nodes (16): motion, react, Accordion(), AccordionItem, AccordionProps, BRAILLE_CHARS, BrailleOrbitIllustration(), EmptyState() (+8 more)
+Cohesion: 0.13
+Nodes (17): motion, react, react-dom, AccordionItem, AccordionProps, BRAILLE_CHARS, BrailleOrbitIllustration(), EmptyState() (+9 more)
 
 ### Community 51 - "Phase 15 — Stage 3: Google OAuth Production Diagnostic & Remediation Report"
 Cohesion: 0.09
@@ -318,8 +319,8 @@ Cohesion: 0.17
 Nodes (11): 1. Executive Summary, 2. Stage-by-Stage Execution Record, 3. Smoke Testing & Verification Guide, 4. Operational Maintenance & Sign-Off, Phase 15 — Production Deployment Report, Stage 1: Git Working Tree Preparation & Local Verification, Stage 2: Production Vercel Deployment & Environment Wiring, Stage 3: Google OAuth Configuration & Token Exchange Hardening (+3 more)
 
 ### Community 56 - "Home.tsx"
-Cohesion: 0.13
-Nodes (16): HERO_SLIDES, HeroSlide, HeroSlideshow(), HeroSlideshowProps, COPY, ABOUT_CONTENT, ClubConstants, FAQ_ITEMS (+8 more)
+Cohesion: 0.14
+Nodes (15): ABOUT_CONTENT, ClubConstants, FAQ_ITEMS, FAQItem, Principle, PROJECTS, ProjectSummary, StatItem (+7 more)
 
 ### Community 57 - "Phase 16.1 — Security Claims Verification & Production Readiness Reconciliation Report"
 Cohesion: 0.10
@@ -327,19 +328,19 @@ Nodes (20): 1.1 Implementation Locus, 1.2 Bypass Feasibility, 1.3 Server-Side En
 
 ### Community 58 - "Projects.tsx"
 Cohesion: 0.17
-Nodes (20): Badge(), BadgeProps, BadgeVariant, StaggerGrid(), StaggerGridProps, StaggerItem(), StaggerItemProps, EventCardSkeleton() (+12 more)
+Nodes (20): Accordion(), Badge(), BadgeProps, BadgeVariant, TextProximity(), TextProximityProps, HeroSlideshow(), StaggerGrid() (+12 more)
 
 ### Community 59 - "verify-supabase-staging.mjs"
 Cohesion: 0.33
 Nodes (5): adminClient, recordTest(), runAdversarialSuite(), stagingEnv, testResults
 
-### Community 60 - "AdminLayout.tsx"
-Cohesion: 0.16
-Nodes (8): AdminLayout, ErrorBoundary, ErrorBoundaryProps, ErrorBoundaryState, Header(), Logo(), LogoProps, AdminLayout()
+### Community 60 - "validation.ts"
+Cohesion: 0.11
+Nodes (24): ACADEMIC_YEARS, COMMON_PASSWORDS, ContactFormData, DEPARTMENTS, isCommonPassword(), isSafeRedirectPath(), isValidUsn(), normalizeUsn() (+16 more)
 
-### Community 61 - "PublicLayout"
-Cohesion: 0.33
-Nodes (5): PublicLayout(), BottomTabBar(), FeedbackModal(), FloatingReportButton(), SkipLink()
+### Community 61 - "AdminRegistrations.tsx"
+Cohesion: 0.18
+Nodes (18): AuthContextType, adminDeleteStudent(), adminGetAllRegistrationsDetailed(), adminGetAllStudents(), adminLogExport(), DbStudentRegistration, StudentProfile, applySheetStyles() (+10 more)
 
 ### Community 62 - "Phase 16 — Comprehensive Codebase Audit & Quality Stabilization Report (Reconciled & Corrected)"
 Cohesion: 0.14
@@ -357,9 +358,9 @@ Nodes (12): 1. Item-by-Item Verification & Correction Matrix, 2. Updated Deliver
 Cohesion: 0.10
 Nodes (19): 1. Executive Summary, 2.1 Table: `public.contact_messages`, 2.2 Table: `public.feedback`, 2. In-Depth Inspection Findings: Contact Messages & Feedback Records, 3.1 What is Automatically and Atomically Deleted, 3.2 What Remains After Account Deletion, 3. Account Deletion: Database Atomicity vs. Retained Information, 4.1 Section 6 of Privacy Policy (`src/pages/PrivacyPolicy.tsx`) (+11 more)
 
-### Community 66 - "ProtectedRoute"
-Cohesion: 0.38
-Nodes (5): Loader(), LoaderProps, snakeOrder, ProtectedRoute(), ProtectedRouteProps
+### Community 66 - "Alert"
+Cohesion: 0.33
+Nodes (10): 2.1 Security & Auth Findings, Alert(), AlertProps, AlertType, GOOGLE_SIGNIN_ENABLED, isProfileComplete(), sanitizeRedirectPath(), Onboarding() (+2 more)
 
 ### Community 67 - "dependencies"
 Cohesion: 0.15
@@ -370,8 +371,12 @@ Cohesion: 0.47
 Nodes (4): vite, @vitejs/plugin-react, feedbackPlugin(), securityHeaders
 
 ### Community 69 - "SettingsMenu.tsx"
-Cohesion: 0.24
-Nodes (10): getCursorSetting(), setCursorSetting(), SettingsMenu(), SettingsMenuProps, ThemeContext, ThemeContextType, ThemeMode, ThemeProvider() (+2 more)
+Cohesion: 0.31
+Nodes (8): getCursorSetting(), setCursorSetting(), SettingsMenu(), SettingsMenuProps, ThemeContext, ThemeContextType, ThemeMode, useTheme()
+
+### Community 70 - "CursorErrorBoundary"
+Cohesion: 0.25
+Nodes (3): CursorErrorBoundary, Props, State
 
 ### Community 71 - "devDependencies"
 Cohesion: 0.20
@@ -382,27 +387,27 @@ Cohesion: 0.25
 Nodes (8): scripts, build, dev, lint, preview, test:all, test:auth, test:rpc
 
 ### Community 75 - "Gallery.tsx"
-Cohesion: 0.29
-Nodes (11): react-dom, GalleryCardSkeleton(), ProjectCardSkeleton(), Skeleton(), SkeletonProps, TeamCardSkeleton(), TiltCard(), fetchGalleryItems() (+3 more)
+Cohesion: 0.33
+Nodes (10): EventCardSkeleton(), GalleryCardSkeleton(), ProjectCardSkeleton(), Skeleton(), SkeletonProps, TeamCardSkeleton(), fetchGalleryItems(), Gallery() (+2 more)
 
 ## Knowledge Gaps
 - **10 isolated node(s):** `autoprefixer`, `postcss`, `tailwindcss`, `@axe-core/react`, `@types/node` (+5 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 639 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `ProtectedRoute()` connect `ProtectedRoute` to `useReducedMotion`, `lucide-react`, `Phase 13 — Production Release Readiness Review Report`, `Architectural & Legal Analysis: Handling of Students Under 18 Under the DPDP Act 2023`, `2. Categorized Findings & Verifications`, `Phase 15 — Stage 3: Google OAuth Production Diagnostic & Remediation Report`, `Google OAuth Production Verification & Launch Readiness Report`, `Phase 16 — Comprehensive Codebase Audit & Quality Stabilization Report (Reconciled & Corrected)`?**
+- **Why does `ProtectedRoute()` connect `App.tsx` to `Alert`, `lucide-react`, `Phase 13 — Production Release Readiness Review Report`, `Architectural & Legal Analysis: Handling of Students Under 18 Under the DPDP Act 2023`, `2. Categorized Findings & Verifications`, `Phase 15 — Stage 3: Google OAuth Production Diagnostic & Remediation Report`, `Google OAuth Production Verification & Launch Readiness Report`, `Phase 16 — Comprehensive Codebase Audit & Quality Stabilization Report (Reconciled & Corrected)`?**
   _High betweenness centrality (0.112) - this node is a cross-community bridge._
 - **What connects `autoprefixer`, `postcss`, `tailwindcss` to the rest of the system?**
   _10 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `3. Comprehensive Migration Safety Review (11 Files)` be split into smaller, more focused modules?**
   _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `react` to `useReducedMotion`, `Home.tsx`, `lucide-react`, `MemberDialog.tsx`, `package.json`, `ProtectedRoute`, `SettingsMenu.tsx`, `main.tsx`, `Register.tsx`, `Gallery.tsx`, `api.ts`, `AdminLayout.tsx`, `Home.tsx`, `Projects.tsx`, `CursorProvider.tsx`, `PublicLayout`?**
+- **Why does `react` connect `react` to `App.tsx`, `Alert`, `lucide-react`, `Home.tsx`, `package.json`, `CursorErrorBoundary`, `MemberDialog.tsx`, `SettingsMenu.tsx`, `Register.tsx`, `Gallery.tsx`, `api.ts`, `validation.ts`, `Home.tsx`, `Projects.tsx`, `CursorProvider.tsx`, `AdminRegistrations.tsx`?**
   _High betweenness centrality (0.104) - this node is a cross-community bridge._
-- **Should `useReducedMotion` be split into smaller, more focused modules?**
-  _Cohesion score 0.11260504201680673 - nodes in this community are weakly interconnected._
+- **Should `App.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.05359937402190924 - nodes in this community are weakly interconnected._
 - **Why does `@supabase/supabase-js` connect `ref_node_fs` to `api.ts`, `verify-supabase-staging.mjs`, `package.json`, `verify-backend.mjs`?**
   _High betweenness centrality (0.080) - this node is a cross-community bridge._
 - **Should `Home.tsx` be split into smaller, more focused modules?**

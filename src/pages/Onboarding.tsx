@@ -75,10 +75,10 @@ export const Onboarding: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         fullName: prev.fullName || initialName,
-        usn: prev.usn || profile?.usn || '',
-        department: prev.department || profile?.department || '',
-        year: prev.year || profile?.year || '',
-        semester: prev.semester || profile?.semester || ''
+        usn: prev.usn || profile?.usn || user?.user_metadata?.usn || '',
+        department: prev.department || profile?.department || user?.user_metadata?.department || '',
+        year: prev.year || profile?.year || user?.user_metadata?.year || '',
+        semester: prev.semester || profile?.semester || user?.user_metadata?.semester || ''
       }));
       setHasPrefilled(true);
     }
@@ -216,7 +216,7 @@ export const Onboarding: React.FC = () => {
               value={formData.usn}
               onChange={(e) => setFormData({ ...formData, usn: e.target.value.toUpperCase() })}
               className="w-full px-3.5 py-2.5 bg-[var(--surface)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--text-strong)] rounded-sm font-mono text-sm uppercase outline-none transition-colors"
-              placeholder="e.g. 2KA22CS001"
+              placeholder="e.g. KUB24CSE198"
             />
             {formErrors.usn && (
               <span className="text-xs text-[var(--color-danger-strong)] font-mono">{formErrors.usn}</span>

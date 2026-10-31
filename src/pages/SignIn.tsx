@@ -40,7 +40,7 @@ export const SignIn: React.FC = () => {
     if (isAdmin && !profile) {
       navigate('/admin', { replace: true });
     } else if (!isProfileComplete(profile) || consentState !== 'ACTIVE') {
-      navigate('/onboarding', { replace: true });
+      navigate(`/onboarding?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
     } else {
       navigate(returnUrl, { replace: true });
     }

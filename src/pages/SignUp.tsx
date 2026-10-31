@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useAuth, isProfileComplete } from '../context/AuthContext';
-import { signUpSchema, DEPARTMENTS, ACADEMIC_YEARS, SEMESTERS, sanitizeRedirectPath } from '../lib/validation';
+import { signUpSchema, sanitizeRedirectPath } from '../lib/validation';
 import type { SignUpFormData } from '../lib/validation';
 import { Alert } from '../components/Alert';
 import { HairlineGrid } from '../components/HairlineGrid';
@@ -22,21 +22,15 @@ export const SignUp: React.FC = () => {
     if (isAdmin && !profile) {
       navigate('/admin', { replace: true });
     } else if (!isProfileComplete(profile) || consentState !== 'ACTIVE') {
-      navigate('/onboarding', { replace: true });
+      navigate(`/onboarding?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
     } else {
       navigate(returnUrl, { replace: true });
     }
   }, [user, profile, isAdmin, consentState, loading, navigate, returnUrl]);
 
   const [formData, setFormData] = useState<SignUpFormData>({
-    fullName: '',
     email: '',
-    usn: '',
-    department: DEPARTMENTS[0],
-    year: ACADEMIC_YEARS[0],
-    semester: SEMESTERS[0],
     password: '',
-    consent: false,
     websiteUrl: ''
   });
 
@@ -61,23 +55,18 @@ export const SignUp: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    const val = type === 'checkbox' ? checked : value;
-
-    setFormData((prev) => ({ ...prev, [name]: val }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (touched[name]) {
-      validateField(name as keyof SignUpFormData, val);
+      validateField(name as keyof SignUpFormData, value);
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    const val = type === 'checkbox' ? checked : value;
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
-    validateField(name as keyof SignUpFormData, val);
+    validateField(name as keyof SignUpFormData, value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,7 +103,7 @@ export const SignUp: React.FC = () => {
     if (result.requiresVerification) {
       setVerificationPending(true);
     } else {
-      navigate(returnUrl, { replace: true });
+      navigate(`/onboarding?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
     }
   };
 
@@ -140,10 +129,10 @@ export const SignUp: React.FC = () => {
               Verify your email
             </h1>
             <p className="text-sm text-[var(--text)] leading-relaxed m-0">
-              A verification link was sent to <strong className="text-[var(--text-strong)]">{formData.email}</strong>. Please check your inbox and confirm your address before registering for club events.
+              A verification link was sent to <strong className="text-[var(--text-strong)]">{formData.email}</strong>. Please check your inbox and confirm your address to continue to your student profile setup.
             </p>
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
-              <Link to="/signin" className="cc-btn cc-btn--primary min-h-[44px] text-xs font-mono font-bold">
+              <Link to={`/signin?returnUrl=${encodeURIComponent(returnUrl)}`} className="cc-btn cc-btn--primary min-h-[44px] text-xs font-mono font-bold">
                 Go to Sign In
               </Link>
               <Link to="/privacy-policy" className="cc-btn cc-btn--secondary min-h-[44px] text-xs font-mono font-semibold">
@@ -161,14 +150,20 @@ export const SignUp: React.FC = () => {
       <div data-cursor-native className="hairline-row w-full px-4 sm:px-6 py-12 flex justify-center">
         <div className="max-w-xl w-full flex flex-col gap-6 text-left">
           <div className="flex flex-col gap-2 pb-2 border-b border-[var(--border)]">
-            <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-strong)] dark:text-[var(--accent-on-dark)] font-semibold">
-              Kishkinda University Coders Club
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">
+                Step 1 of 2
+              </span>
+              <span className="text-[var(--text-muted)] text-xs font-mono">•</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                Kishkinda University Coders Club
+              </span>
+            </div>
             <h1 className="font-display font-extrabold text-3xl sm:text-4xl uppercase tracking-tight text-[var(--text-strong)] m-0">
-              Create student account
+              Create your account
             </h1>
             <p className="text-sm text-[var(--text-muted)] m-0">
-              Sign up once with your student details to register for hackathons and workshops in one click.
+              Enter your email and create a password. You will complete your student academic profile in Step 2.
             </p>
           </div>
 
@@ -234,29 +229,6 @@ export const SignUp: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="signup-fullName" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                Full Name <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
-              </label>
-              <input
-                id="signup-fullName"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                value={formData.fullName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                aria-invalid={Boolean(errors.fullName)}
-                aria-describedby={errors.fullName ? 'signup-fullName-error' : undefined}
-                className="cc-input w-full min-h-[44px] px-3.5 bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-sm focus:border-[var(--accent)] text-sm"
-              />
-              {errors.fullName && (
-                <span id="signup-fullName-error" className="text-xs text-[var(--color-danger-strong)] dark:text-[var(--color-danger)] font-mono">
-                  {errors.fullName}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
               <label htmlFor="signup-email" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
                 Email Address <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
               </label>
@@ -265,6 +237,7 @@ export const SignUp: React.FC = () => {
                 name="email"
                 type="email"
                 autoComplete="username"
+                placeholder="you@kishkinda.edu.in"
                 value={formData.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -277,92 +250,6 @@ export const SignUp: React.FC = () => {
                   {errors.email}
                 </span>
               )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="signup-usn" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                University Seat Number (USN) <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
-              </label>
-              <input
-                id="signup-usn"
-                name="usn"
-                type="text"
-                autoCapitalize="characters"
-                value={formData.usn}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="e.g. KU2024CS001"
-                aria-invalid={Boolean(errors.usn)}
-                aria-describedby={errors.usn ? 'signup-usn-error' : undefined}
-                className="cc-input w-full min-h-[44px] px-3.5 bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-sm focus:border-[var(--accent)] font-mono text-sm uppercase"
-              />
-              {errors.usn && (
-                <span id="signup-usn-error" className="text-xs text-[var(--color-danger-strong)] dark:text-[var(--color-danger)] font-mono">
-                  {errors.usn}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="signup-department" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                Department <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
-              </label>
-              <select
-                id="signup-department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className="cc-input w-full min-h-[44px] px-3.5 bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-sm focus:border-[var(--accent)] text-sm"
-              >
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="signup-year" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                  Academic Year <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
-                </label>
-                <select
-                  id="signup-year"
-                  name="year"
-                  value={formData.year}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className="cc-input w-full min-h-[44px] px-3.5 bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-sm focus:border-[var(--accent)] text-sm"
-                >
-                  {ACADEMIC_YEARS.map((yr) => (
-                    <option key={yr} value={yr}>
-                      {yr}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="signup-semester" className="text-xs font-mono font-semibold text-[var(--text-strong)] uppercase">
-                  Semester <span className="text-[var(--color-danger-strong)] dark:text-[var(--color-danger)]">*</span>
-                </label>
-                <select
-                  id="signup-semester"
-                  name="semester"
-                  value={formData.semester}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className="cc-input w-full min-h-[44px] px-3.5 bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-sm focus:border-[var(--accent)] text-sm"
-                >
-                  {SEMESTERS.map((sem) => (
-                    <option key={sem} value={sem}>
-                      {sem}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -401,53 +288,24 @@ export const SignUp: React.FC = () => {
               )}
             </div>
 
-            <div className="p-4 bg-[var(--surface-raised)] border border-[var(--border)] rounded-sm flex flex-col gap-3">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-strong)] dark:text-[var(--accent-on-dark)]">
-                Data Protection & Privacy Notice
-              </span>
-              <p className="text-xs text-[var(--text)] leading-relaxed m-0">
-                In compliance with the Digital Personal Data Protection Act, 2023, Coders Club collects your name, email address, USN, department, and semester exclusively for event registration, attendance verification, and college record keeping. You may withdraw consent or request deletion at any time from your account page.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Link to="/privacy-policy" target="_blank" className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] underline">
-                  View Privacy Policy →
-                </Link>
-                <span className="text-xs text-[var(--text-muted)]">•</span>
-                <Link to="/terms" target="_blank" className="text-xs font-mono text-[var(--link)] hover:text-[var(--link-hover)] underline">
-                  View Terms of Service →
-                </Link>
-              </div>
-
-              <div className="flex items-start gap-3 pt-2 border-t border-[var(--border)]">
-                <input
-                  id="signup-consent"
-                  name="consent"
-                  type="checkbox"
-                  checked={formData.consent}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  aria-invalid={Boolean(errors.consent)}
-                  aria-describedby={errors.consent ? 'signup-consent-error' : undefined}
-                  className="mt-1 w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
-                />
-                <label htmlFor="signup-consent" className="text-xs text-[var(--text-strong)] font-sans leading-normal cursor-pointer select-none">
-                  I have read and consent to the collection and processing of my academic profile data for Coders Club activities.
-                </label>
-              </div>
-              {errors.consent && (
-                <span id="signup-consent-error" className="text-xs text-[var(--color-danger-strong)] dark:text-[var(--color-danger)] font-mono">
-                  {errors.consent}
-                </span>
-              )}
+            <div className="p-3.5 bg-[var(--surface-raised)] border border-[var(--border)] rounded-sm text-xs text-[var(--text-muted)] leading-relaxed font-sans">
+              By creating an account, you agree to Kishkinda University Coders Club's{' '}
+              <Link to="/terms" target="_blank" className="text-[var(--link)] hover:text-[var(--link-hover)] underline">
+                Terms of Service
+              </Link>{' '}
+              and acknowledge our{' '}
+              <Link to="/privacy-policy" target="_blank" className="text-[var(--link)] hover:text-[var(--link-hover)] underline">
+                Privacy Policy
+              </Link>. You will complete your academic profile and privacy consent in Step 2.
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting || !formData.consent}
+              disabled={isSubmitting}
               aria-busy={isSubmitting}
               className="cc-btn cc-btn--primary min-h-[48px] w-full text-sm font-mono font-bold uppercase tracking-wider"
             >
-              {isSubmitting ? 'Creating account...' : 'Create account'}
+              {isSubmitting ? 'Creating account...' : 'Continue to Profile (Step 2) →'}
             </button>
           </form>
 

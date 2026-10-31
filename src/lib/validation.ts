@@ -81,44 +81,17 @@ export function isValidUsn(rawUsn: string): boolean {
 }
 
 export const signUpSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters.')
-    .max(100, 'Name cannot exceed 100 characters.')
-    .regex(noHtmlRegex, 'HTML tags and angle brackets are not permitted.'),
   email: z
     .string()
     .trim()
     .toLowerCase()
     .email('Please enter a valid email address.')
     .max(100, 'Email cannot exceed 100 characters.'),
-  usn: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .refine(isValidUsn, {
-      message: 'USN must follow Kishkinda University format (e.g. KUB24CSE198).'
-    }),
-  department: z
-    .string()
-    .min(1, 'Please select your department.'),
-  year: z
-    .string()
-    .min(1, 'Please select your academic year.'),
-  semester: z
-    .string()
-    .min(1, 'Please select your semester.'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters.')
     .refine((p) => !isCommonPassword(p), {
       message: 'This password is too easily guessed. Please choose a more unique password.'
-    }),
-  consent: z
-    .boolean()
-    .refine((val) => val === true, {
-      message: 'You must review and accept the Privacy Notice to sign up.'
     }),
   websiteUrl: z.string().max(0, 'Bot submission rejected.').optional().or(z.literal(''))
 });

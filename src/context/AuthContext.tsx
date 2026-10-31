@@ -483,16 +483,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data: authData, error: authErr } = await supabase.auth.signUp({
           email: cleanEmail,
-          password: data.password,
-          options: {
-            data: {
-              full_name: data.fullName,
-              usn: data.usn.toUpperCase().trim(),
-              department: data.department,
-              year: data.year,
-              semester: data.semester
-            }
-          }
+          password: data.password
         });
 
         if (authErr || !authData.user) {
@@ -503,30 +494,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const userId = authData.user.id;
-
-        // Attempt initial profile & consent upsert if session is active
-        try {
-          if (authData.session) {
-            await upsertStudentProfile({
-              id: userId,
-              full_name: data.fullName,
-              usn: data.usn.toUpperCase().trim(),
-              department: data.department,
-              year: data.year,
-              semester: data.semester,
-              email: cleanEmail,
-              email_verified: Boolean(authData.user.email_confirmed_at)
-            });
-
-            await recordConsent(
-              userId,
-              'v1.0-2026',
-              'Student event registration, attendance verification, and club records under Kishkinda University policy.'
-            );
-          }
-        } catch {
-          // If session was inactive (pending verification), the user will complete or load on first sign-in
-        }
 
         const authUser: AuthUser = {
           id: userId,
@@ -551,30 +518,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Mock Mode Signup
     const mockId = 'mock-student-1';
     const mockUser: AuthUser = { id: mockId, email: cleanEmail, email_confirmed_at: new Date().toISOString() };
-    const newProfile: StudentProfile = {
-      id: mockId,
-      full_name: data.fullName,
-      usn: data.usn.toUpperCase().trim(),
-      department: data.department,
-      year: data.year,
-      semester: data.semester,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      email: cleanEmail,
-      email_verified: true
-    };
 
     activeUserIdRef.current = mockId;
     setUser(mockUser);
-    setProfile(newProfile);
+    setProfile(null);
     setIsAdmin(false);
-    setConsentState('ACTIVE');
+    setConsentState('MISSING');
 
-    localStorage.setItem('cc-mock-auth-session', JSON.stringify({ user: mockUser, profile: newProfile, isAdmin: false }));
-    const consents = JSON.parse(localStorage.getItem('cc-mock-consents') || '{}');
-    consents[mockId] = { version: 'v1.0-2026', accepted_at: new Date().toISOString(), withdrawn_at: null };
-    localStorage.setItem('cc-mock-consents', JSON.stringify(consents));
-
+    localStorage.setItem('cc-mock-auth-session', JSON.stringify({ user: mockUser, profile: null, isAdmin: false }));
     return { success: true, requiresVerification: false };
   };
 
