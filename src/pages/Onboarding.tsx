@@ -18,7 +18,7 @@ const onboardingSchema = z.object({
     .trim()
     .toUpperCase()
     .refine(isValidUsn, {
-      message: 'USN must follow Kishkinda University format (e.g. KU2024CS001) or Karnataka VTU format (e.g. 2KA22CS001).'
+      message: 'USN must follow Kishkinda University format (e.g. KUB24CSE198).'
     }),
   department: z.string().refine((val) => (DEPARTMENTS as readonly string[]).includes(val), {
     message: 'Please select a valid department.'

@@ -76,7 +76,7 @@ console.log('✓ isProfileComplete evaluates completeness strictly.\n');
 // -----------------------------------------------------------------------------
 console.log('Test 3: Authoritative USN Sanitization and Validation');
 
-const USN_AUTHORITATIVE_REGEX = /^(KU[0-9]{4}[A-Z]{2,4}[0-9]{3}|[1-9][A-Z]{2}[0-9]{2}[A-Z]{2,4}[0-9]{3})$/;
+const USN_AUTHORITATIVE_REGEX = /^KU[A-Z]?(?:[0-9]{2}|[0-9]{4})[A-Z]{2,4}[0-9]{3}$/;
 
 function validateAuthoritativeUsn(rawUsn) {
   if (typeof rawUsn !== 'string') return false;
@@ -85,19 +85,21 @@ function validateAuthoritativeUsn(rawUsn) {
   return clean;
 }
 
-// 3a. Valid USNs (Kishkinda University & Karnataka VTU formats)
+// 3a. Valid USNs (Kishkinda University format with degree prefix and 2- or 4-digit year)
+assert.strictEqual(validateAuthoritativeUsn('KUB24CSE198'), 'KUB24CSE198');
+assert.strictEqual(validateAuthoritativeUsn('KU24CSE198'), 'KU24CSE198');
+assert.strictEqual(validateAuthoritativeUsn('KUM24MCA001'), 'KUM24MCA001');
 assert.strictEqual(validateAuthoritativeUsn('KU2024CS001'), 'KU2024CS001');
 assert.strictEqual(validateAuthoritativeUsn('KU2023AI014'), 'KU2023AI014');
-assert.strictEqual(validateAuthoritativeUsn('2KA22CS001'), '2KA22CS001');
-assert.strictEqual(validateAuthoritativeUsn('KU2024MCA001'), 'KU2024MCA001');
-assert.strictEqual(validateAuthoritativeUsn('2KA22AIM001'), '2KA22AIM001');
 
 // 3b. Lowercase and whitespace normalization
+assert.strictEqual(validateAuthoritativeUsn('  kub24cse198  '), 'KUB24CSE198');
+assert.strictEqual(validateAuthoritativeUsn('\tku24cse198\n'), 'KU24CSE198');
 assert.strictEqual(validateAuthoritativeUsn('  ku2024cs001  '), 'KU2024CS001');
-assert.strictEqual(validateAuthoritativeUsn('\tku2023ai014\n'), 'KU2023AI014');
-assert.strictEqual(validateAuthoritativeUsn('  2ka22cs001  '), '2KA22CS001');
 
-// 3c. Invalid USNs strictly rejected
+// 3c. Invalid USNs strictly rejected (including VTU formats - not affiliated)
+assert.strictEqual(validateAuthoritativeUsn('2KA22CS001'), false, 'VTU format must be strictly rejected');
+assert.strictEqual(validateAuthoritativeUsn('2KA22AIM001'), false, 'VTU format must be strictly rejected');
 assert.strictEqual(validateAuthoritativeUsn('ABCDE123'), false, 'Arbitrary alphanumeric string must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('A---1'), false, 'Hyphenated string must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('ABCD/1'), false, 'Slashed string must be rejected');
@@ -109,8 +111,6 @@ assert.strictEqual(validateAuthoritativeUsn('-KU2024CS001'), false, 'Leading sym
 assert.strictEqual(validateAuthoritativeUsn('KU2024CS001-'), false, 'Trailing symbol must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('KU'), false, 'Too short (< 5) must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('KU2024CS01'), false, '2-digit serial number must be rejected');
-assert.strictEqual(validateAuthoritativeUsn('KU24CS001'), false, '2-digit KU admission year must be rejected');
-assert.strictEqual(validateAuthoritativeUsn('2KA2022CS001'), false, '4-digit VTU admission year must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('KU202412001'), false, 'Numeric department code must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('KU2024C001'), false, '1-letter department code must be rejected');
 assert.strictEqual(validateAuthoritativeUsn('KU2024CS0001'), false, '4-digit serial number must be rejected');

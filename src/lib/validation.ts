@@ -68,7 +68,7 @@ export const registrationSchema = z.object({
 
 export type RegistrationFormData = z.infer<typeof registrationSchema>;
 
-export const USN_AUTHORITATIVE_REGEX = /^(KU[0-9]{4}[A-Z]{2,4}[0-9]{3}|[1-9][A-Z]{2}[0-9]{2}[A-Z]{2,4}[0-9]{3})$/;
+export const USN_AUTHORITATIVE_REGEX = /^KU[A-Z]?(?:[0-9]{2}|[0-9]{4})[A-Z]{2,4}[0-9]{3}$/;
 
 export function normalizeUsn(rawUsn: string): string {
   return typeof rawUsn === 'string' ? rawUsn.trim().toUpperCase() : '';
@@ -98,7 +98,7 @@ export const signUpSchema = z.object({
     .trim()
     .toUpperCase()
     .refine(isValidUsn, {
-      message: 'USN must follow Kishkinda University format (e.g. KU2024CS001) or Karnataka VTU format (e.g. 2KA22CS001).'
+      message: 'USN must follow Kishkinda University format (e.g. KUB24CSE198).'
     }),
   department: z
     .string()
