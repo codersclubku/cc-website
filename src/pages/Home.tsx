@@ -50,15 +50,15 @@ export const Home: React.FC = () => {
       >
         <HeroSlideshow />
 
-        <div className="relative z-20 w-full px-4 sm:px-8 lg:px-16 py-8 sm:py-16 lg:py-20 flex items-center min-h-[380px] sm:min-h-[440px] lg:min-h-[580px]">
+        <div className="relative z-20 w-full px-4 sm:px-8 lg:px-16 py-8 sm:py-16 lg:py-20 flex items-center min-h-[85svh] sm:min-h-[440px] lg:min-h-[580px]">
           <div className="w-full lg:max-w-[48%] flex flex-col items-start justify-center gap-5 text-left">
             <div className="flex items-center gap-2.5">
               <KULogo className="h-6 w-auto shrink-0" fetchPriority="high" loading="eager" />
-              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-strong)] dark:text-[var(--accent-on-dark)] font-semibold">
+              <span className="font-mono text-xs uppercase tracking-wider text-white font-semibold">
                 Kishkinda University
               </span>
-              <span className="text-[var(--border)]" aria-hidden="true">•</span>
-              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
+              <span className="text-[#f1e9ff]" aria-hidden="true">•</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-[#f1e9ff] font-semibold">
                 Technical Community
               </span>
             </div>
@@ -66,10 +66,14 @@ export const Home: React.FC = () => {
             <TextProximity
               text="A student-run technical community that builds real software"
               id="hero-title"
-              className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--text)] leading-[1.15] m-0"
+              className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.15] m-0 [text-shadow:0_2px_12px_rgba(0,0,0,0.6)]"
+              style={{ textShadow: '0 2px 12px rgba(0, 0, 0, 0.6)' }}
             />
 
-            <p className="text-base sm:text-lg text-[var(--text-muted)] leading-relaxed max-w-2xl m-0">
+            <p
+              className="text-base sm:text-lg text-[#f1e9ff] leading-relaxed max-w-2xl m-0 [text-shadow:0_2px_12px_rgba(0,0,0,0.6)]"
+              style={{ textShadow: '0 2px 12px rgba(0, 0, 0, 0.6)' }}
+            >
               We build, document, and maintain public software while training members to lead future batches at Kishkinda University.
             </p>
 
@@ -86,7 +90,14 @@ export const Home: React.FC = () => {
               <Link
                 to="/about"
                 data-magnetic
-                className="cc-btn cc-btn--secondary min-h-[44px] px-6 text-sm font-mono font-semibold"
+                className="cc-btn min-h-[44px] px-6 text-sm font-mono font-semibold !text-white transition-colors hover:!bg-[rgba(30,10,55,0.75)] hover:!border-[#E0AAFF]"
+                style={{
+                  backgroundColor: 'rgba(20, 0, 40, 0.55)',
+                  backdropFilter: 'blur(6px)',
+                  WebkitBackdropFilter: 'blur(6px)',
+                  border: '1.5px solid #C77DFF',
+                  color: '#ffffff',
+                }}
               >
                 <span>Learn about club</span>
               </Link>

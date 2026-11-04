@@ -86,11 +86,9 @@ export const Header: React.FC = () => {
     <header
       style={{
         paddingTop: 'env(safe-area-inset-top)',
-        backgroundColor: isScrolled
-          ? 'color-mix(in srgb, var(--bg) 60%, transparent)'
-          : 'color-mix(in srgb, var(--bg) 55%, transparent)',
-        WebkitBackdropFilter: 'blur(24px)',
-        backdropFilter: 'blur(24px)',
+        backgroundColor: 'rgba(20, 0, 40, 0.6)',
+        WebkitBackdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(8px)',
       }}
       className={`sticky top-0 z-[100] min-h-[4rem] h-[calc(4rem+env(safe-area-inset-top))] w-full border-b border-[var(--border)] transition-[transform,background-color,backdrop-filter,border-color] duration-200 backdrop-blur-xl ${
         isHeaderVisible ? 'translate-y-0' : '-translate-y-full md:translate-y-0'

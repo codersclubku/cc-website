@@ -67,6 +67,7 @@ export interface HeroSlideshowProps {
   widthClass?: string;
   fadeSpan?: string;
   mobileReducedOpacity?: boolean;
+  mobileGradient?: string;
   showDots?: boolean;
   ariaLabel?: string;
 }
@@ -77,6 +78,7 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
   widthClass = 'lg:w-[55%]',
   fadeSpan = '28%',
   mobileReducedOpacity = false,
+  mobileGradient = 'linear-gradient(to top, rgba(20, 0, 40, 0.85) 0%, rgba(20, 0, 40, 0.55) 40%, rgba(20, 0, 40, 0) 75%)',
   showDots = true,
   ariaLabel = 'Kishkinda University Campus Slideshow',
 }) => {
@@ -128,7 +130,7 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
         <div
           className="block lg:hidden absolute inset-0 pointer-events-none z-10"
           style={{
-            background: 'linear-gradient(to bottom, color-mix(in srgb, var(--bg) 86%, transparent) 0%, color-mix(in srgb, var(--bg) 96%, transparent) 55%, var(--bg) 100%)',
+            background: mobileGradient,
           }}
           aria-hidden="true"
         />
@@ -196,7 +198,7 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
       <div
         className="block lg:hidden absolute inset-0 pointer-events-none z-10"
         style={{
-          background: 'linear-gradient(to bottom, color-mix(in srgb, var(--bg) 86%, transparent) 0%, color-mix(in srgb, var(--bg) 96%, transparent) 55%, var(--bg) 100%)',
+          background: mobileGradient,
         }}
         aria-hidden="true"
       />

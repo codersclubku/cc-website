@@ -7,12 +7,14 @@ interface TextProximityProps {
   text: string;
   className?: string;
   id?: string;
+  style?: React.CSSProperties;
 }
 
 export const TextProximity: React.FC<TextProximityProps> = ({
   text,
   className = '',
   id,
+  style,
 }) => {
   const containerRef = useRef<HTMLHeadingElement>(null);
   const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -106,7 +108,7 @@ export const TextProximity: React.FC<TextProximityProps> = ({
 
   if (prefersReduced) {
     return (
-      <h1 id={id} className={className}>
+      <h1 id={id} className={className} style={style}>
         {text}
       </h1>
     );
@@ -117,7 +119,7 @@ export const TextProximity: React.FC<TextProximityProps> = ({
   let globalIndex = 0;
 
   return (
-    <h1 id={id} ref={containerRef} className={className}>
+    <h1 id={id} ref={containerRef} className={className} style={style}>
       <span className="sr-only">{text}</span>
       <span aria-hidden="true" className="inline-block">
         {words.map((word, wordIdx) => {
