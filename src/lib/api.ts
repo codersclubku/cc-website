@@ -341,6 +341,7 @@ function getInitialMockTeamMembers(): DbTeamMember[] {
             const matched = origList.find((orig) => orig.id === m.id || orig.name.trim().toLowerCase() === m.name.trim().toLowerCase());
             return {
               ...m,
+              display_order: matched ? matched.display_order : m.display_order,
               email: m.email || matched?.email || null,
               responsibilities: (m.responsibilities && m.responsibilities.length > 0)
                 ? m.responsibilities
@@ -353,7 +354,10 @@ function getInitialMockTeamMembers(): DbTeamMember[] {
           const parsedIds = new Set(parsed.map((p: DbTeamMember) => p.id));
           const parsedNames = new Set(parsed.map((p: DbTeamMember) => p.name?.trim().toLowerCase()));
           const missingOrig = origList.filter((orig) => !parsedIds.has(orig.id) && !parsedNames.has(orig.name?.trim().toLowerCase()));
-          return [...mapped, ...missingOrig];
+          const combined = [...mapped, ...missingOrig];
+          combined.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+          saveMockTeamMembers(combined);
+          return combined;
         }
       }
     } catch {}
@@ -2057,6 +2061,7 @@ export async function fetchTeamGroups(): Promise<PeopleGroup[]> {
 
       const result: PeopleGroup[] = [];
       for (const [groupName, members] of groupsMap.entries()) {
+        members.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
         const id = groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const matchedOrig = PEOPLE_GROUPS.find((g) => g.groupName.toLowerCase() === groupName.toLowerCase() || g.id === id);
         result.push({
@@ -2083,6 +2088,7 @@ export async function fetchTeamGroups(): Promise<PeopleGroup[]> {
 
   const result: PeopleGroup[] = [];
   for (const [groupName, members] of groupsMap.entries()) {
+    members.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
     const id = groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const matchedOrig = PEOPLE_GROUPS.find((g) => g.groupName.toLowerCase() === groupName.toLowerCase() || g.id === id);
     result.push({
